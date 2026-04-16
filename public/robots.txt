@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://minuftours.zappy5.app/sitemap.xml
+Sitemap: https://minuf-tours.co.il/sitemap.xml

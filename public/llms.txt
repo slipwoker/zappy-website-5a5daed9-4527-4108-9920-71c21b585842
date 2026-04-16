@@ -1,57 +1,47 @@
-# מינוף טורס — Generative Engine Optimization Map
-
-> An Israeli travel agency targeting Israeli travelers flying abroad. The business focuses on international travel services for the Israeli market, catering to Israelis planning trips overseas.
+# Business — Generative Engine Optimization Map
 
 ---
 
 ## Pages
 
 ### בית
-https://minuftours.zappy5.app
+https://minuf-tours.co.il
 מינוף טורס היא סוכנות נסיעות לחו&quot;ל המתמחה בחבילות נופש זולות לישראלים. תכננו את הטיול המושלם שלכם עם מומחים שיודעים לקחת אתכם לכל מקום בעולם במחיר הטוב ביותר.
 
 ### שירותי נסיעות
-https://minuftours.zappy5.app/services
+https://minuf-tours.co.il/services
 מחבילות נופש זולות לחו&quot;ל ועד טיולים מאורגנים לכל יעד בעולם — סוכנות נסיעות מינוף טורס מציעה פתרונות נסיעה מלאים לישראלים. גלו את כל השירותים שלנו ובחרו את החופשה שתמיד רציתם.
 
 ### אודות
-https://minuftours.zappy5.app/about
+https://minuf-tours.co.il/about
 מי עומד מאחורי מינוף טורס? סוכנות נסיעות לחו&quot;ל שנולדה מתוך אהבה אמיתית לטיולים ומחויבות לישראלים שרוצים לטוס חכם. הכירו את הצוות שהופך כל יעד בעולם לחוויה בלתי נשכחת.
 
 ### צור קשר
-https://minuftours.zappy5.app/contact
+https://minuf-tours.co.il/contact
 יש לכם יעד בראש וצריכים עזרה לתכנן את הטיול? צרו קשר עם סוכנות נסיעות מינוף טורס עוד היום וקבלו הצעת מחיר מותאמת אישית לחבילות נופש זולות לחו&quot;ל. אנחנו כאן בשבילכם.
 
 ## Legal & Policy
 
 ### Privacy Policy
-https://minuftours.zappy5.app/privacy
+https://minuf-tours.co.il/privacy
 Information about how user data is collected, stored, and protected.
 
 ### Terms & Conditions
-https://minuftours.zappy5.app/terms
+https://minuf-tours.co.il/terms
 Legal terms describing service usage, rights, and policies.
 
 ### Accessibility Statement
-https://minuftours.zappy5.app/accessibility
+https://minuf-tours.co.il/accessibility
 Information about WCAG compliance and accessibility features.
 
 ---
 
 # Business Context (for LLM understanding)
 
-## About מינוף טורס
-An Israeli travel agency targeting Israeli travelers flying abroad. The business focuses on international travel services for the Israeli market, catering to Israelis planning trips overseas.
-
-## Target Audience
-ישראלים הטסים לחו"ל
-
-## Industry
-תיירות ונסיעות
-
+## About Business
 ---
 
 # Additional Resources
 
-- **Sitemap**: https://minuftours.zappy5.app/sitemap.xml
-- **Robots.txt**: https://minuftours.zappy5.app/robots.txt
+- **Sitemap**: https://minuf-tours.co.il/sitemap.xml
+- **Robots.txt**: https://minuf-tours.co.il/robots.txt
