@@ -1,47 +1,57 @@
-# Business — Generative Engine Optimization Map
+# מינוף טורס — Generative Engine Optimization Map
+
+> An Israeli travel agency targeting Israeli travelers flying abroad. The business focuses on international travel services for the Israeli market, catering to Israelis planning trips overseas.
 
 ---
 
 ## Pages
 
 ### בית
-https://example.com
+https://minuftours.zappy5.app
 מינוף טורס היא סוכנות נסיעות לחו&quot;ל המתמחה בחבילות נופש זולות לישראלים. תכננו את הטיול המושלם שלכם עם מומחים שיודעים לקחת אתכם לכל מקום בעולם במחיר הטוב ביותר.
 
 ### שירותי נסיעות
-https://example.com/services
+https://minuftours.zappy5.app/services
 מחבילות נופש זולות לחו&quot;ל ועד טיולים מאורגנים לכל יעד בעולם — סוכנות נסיעות מינוף טורס מציעה פתרונות נסיעה מלאים לישראלים. גלו את כל השירותים שלנו ובחרו את החופשה שתמיד רציתם.
 
 ### אודות
-https://example.com/about
+https://minuftours.zappy5.app/about
 מי עומד מאחורי מינוף טורס? סוכנות נסיעות לחו&quot;ל שנולדה מתוך אהבה אמיתית לטיולים ומחויבות לישראלים שרוצים לטוס חכם. הכירו את הצוות שהופך כל יעד בעולם לחוויה בלתי נשכחת.
 
 ### צור קשר
-https://example.com/contact
+https://minuftours.zappy5.app/contact
 יש לכם יעד בראש וצריכים עזרה לתכנן את הטיול? צרו קשר עם סוכנות נסיעות מינוף טורס עוד היום וקבלו הצעת מחיר מותאמת אישית לחבילות נופש זולות לחו&quot;ל. אנחנו כאן בשבילכם.
 
 ## Legal & Policy
 
 ### Privacy Policy
-https://example.com/privacy
+https://minuftours.zappy5.app/privacy
 Information about how user data is collected, stored, and protected.
 
 ### Terms & Conditions
-https://example.com/terms
+https://minuftours.zappy5.app/terms
 Legal terms describing service usage, rights, and policies.
 
 ### Accessibility Statement
-https://example.com/accessibility
+https://minuftours.zappy5.app/accessibility
 Information about WCAG compliance and accessibility features.
 
 ---
 
 # Business Context (for LLM understanding)
 
-## About Business
+## About מינוף טורס
+An Israeli travel agency targeting Israeli travelers flying abroad. The business focuses on international travel services for the Israeli market, catering to Israelis planning trips overseas.
+
+## Target Audience
+ישראלים הטסים לחו"ל
+
+## Industry
+תיירות ונסיעות
+
 ---
 
 # Additional Resources
 
-- **Sitemap**: https://example.com/sitemap.xml
-- **Robots.txt**: https://example.com/robots.txt
+- **Sitemap**: https://minuftours.zappy5.app/sitemap.xml
+- **Robots.txt**: https://minuftours.zappy5.app/robots.txt
