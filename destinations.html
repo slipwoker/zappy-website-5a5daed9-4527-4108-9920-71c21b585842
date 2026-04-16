@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <title>יעדים</title>
+    <meta name="description" content="מינוף טורס - יעדים">
+    <meta name="keywords" content="">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512x512.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <!-- Zappy Analytics -->
+<script>
+(function() {
+  'use strict';
+  
+  // Configuration
+  var config = {
+    websiteId: '5a5daed9-4527-4108-9920-71c21b585842',
+    apiUrl: 'https://api.zappy5.com/api/analytics/track',
+    sessionDuration: 30 * 60 * 1000, // 30 minutes
+    visitorDuration: 30 * 24 * 60 * 60 * 1000, // 30 days
+    trackPageViews: true,
+    trackClicks: true,
+    trackFormSubmissions: true
+  };
+  
+  // Generate or retrieve persistent visitor ID (30 days)
+  function getVisitorId() {
+    var visitorKey = 'zappy_visitor_' + config.websiteId;
+    var visitor = null;
+    
+    try {
+      visitor = localStorage.getItem(visitorKey);
+      if (visitor) {
+        var visitorData = JSON.parse(visitor);
+        var now = Date.now();
+        
+        // Check if visitor ID is still valid (30 days)
+        if (now - visitorData.created < config.visitorDuration) {
+          // Update last seen timestamp
+          visitorData.lastSeen = now;
+          localStorage.setItem(visitorKey, JSON.stringify(visitorData));
+          return visitorData.id;
+        }
+      }
+    } catch (e) {
+      console.warn('Zappy Analytics: LocalStorage not available');
+    }
+    
+    // Generate new visitor ID
+    var newVisitorId = 'zv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      localStorage.setItem(visitorKey, JSON.stringify({
+        id: newVisitorId,
+        created: Date.now(),
+        lastSeen: Date.now()
+      }));
+    } catch (e) {
+      // Continue without local storage
+    }
+    
+    return newVisitorId;
+  }
+  
+  // Generate or retrieve session ID (30 minutes)
+  function getSessionId() {
+    var sessionKey = 'zappy_session_' + config.websiteId;
+    var session = null;
+    
+    try {
+      session = sessionStorage.getItem(sessionKey);
+      if (session) {
+        var sessionData = JSON.parse(session);
+        var now = Date.now();
+        
+        // Check if session is still valid
+        if (now - sessionData.timestamp < config.sessionDuration) {
+          // Update timestamp
+          sessionData.timestamp = now;
+          sessionStorage.setItem(sessionKey, JSON.stringify(sessionData));
+          return sessionData.id;
+        }
+      }
+    } catch (e) {
+      console.warn('Zappy Analytics: SessionStorage not available');
+    }
+    
+    // Generate new session ID
+    var newSessionId = 'zs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify({
+        id: newSessionId,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      // Continue without session storage
+    }
+    
+    return newSessionId;
+  }
+  
+  var visitorId = getVisitorId();
+  var sessionId = getSessionId();
+  
+  // Track an event
+  function trackEvent(eventType, data) {
+    data = data || {};
+    
+    var eventData = {
+      website_id: config.websiteId,
+      event_type: eventType,
+      page_path: window.location.pathname,
+      referrer: document.referrer || 'direct',
+      visitor_id: visitorId,
+      session_id: sessionId,
+      metadata: data
+    };
+    
+    // Use sendBeacon if available (better for page unload events)
+    if (navigator.sendBeacon) {
+      var blob = new Blob([JSON.stringify(eventData)], { type: 'application/json' });
+      navigator.sendBeacon(config.apiUrl, blob);
+    } else {
+      // Fallback to fetch
+      fetch(config.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventData),
+        keepalive: true
+      }).catch(function(error) {
+        console.warn('Zappy Analytics: Failed to track event', error);
+      });
+    }
+  }
+  
+  // Track page view
+  if (config.trackPageViews) {
+    trackEvent('pageview', {
+      title: document.title,
+      url: window.location.href
+    });
+  }
+  
+  // Track clicks on important elements
+  if (config.trackClicks) {
+    document.addEventListener('click', function(e) {
+      var target = e.target;
+      
+      // Track button clicks (counted as actions)
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        var button = target.tagName === 'BUTTON' ? target : target.closest('button');
+        trackEvent('click', {
+          element: 'button',
+          text: button.textContent.trim().substring(0, 100),
+          id: button.id || null,
+          class: button.className || null
+        });
+      }
+      
+      // Track link clicks (navigation - not counted as actions)
+      else if (target.tagName === 'A' || target.closest('a')) {
+        var link = target.tagName === 'A' ? target : target.closest('a');
+        trackEvent('navigation', {
+          element: 'link',
+          text: link.textContent.trim().substring(0, 100),
+          href: link.href,
+          external: link.hostname !== window.location.hostname
+        });
+      }
+    }, true);
+  }
+  
+  // Track form submissions
+  if (config.trackFormSubmissions) {
+    document.addEventListener('submit', function(e) {
+      var form = e.target;
+      
+      trackEvent('form_submit', {
+        form_id: form.id || null,
+        form_name: form.name || null,
+        form_action: form.action || null,
+        form_method: form.method || 'GET'
+      });
+    }, true);
+  }
+  
+  // Track time on page (send on page unload)
+  var pageLoadTime = Date.now();
+  
+  window.addEventListener('beforeunload', function() {
+    var timeOnPage = Math.floor((Date.now() - pageLoadTime) / 1000); // in seconds
+    
+    trackEvent('page_unload', {
+      time_on_page: timeOnPage,
+      page_path: window.location.pathname
+    });
+  });
+  
+  // Expose tracking function globally for custom events
+  window.zappyAnalytics = {
+    track: trackEvent,
+    getVisitorId: function() { return visitorId; },
+    getSessionId: function() { return sessionId; }
+  };
+  
+})();
+</script>
+<!-- End Zappy Analytics -->
+    <meta property="og:title" content="יעדים">
+    <meta property="og:description" content="מינוף טורס - יעדים">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="יעדים">
+    <meta name="twitter:description" content="מינוף טורס - יעדים">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512x512.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <!-- Cookie Consent -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3/dist/cookieconsent.css">
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3/dist/cookieconsent.umd.js"></script>
+    <!-- Mickidum Accessibility Toolbar -->
+    <script src="https://cdn.jsdelivr.net/gh/mickidum/acc_toolbar/acctoolbar/acctoolbar.min.js"></script>
+
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:url" content="https://minuf-tours.co.il/destinations">
+    <meta property="og:type" content="article">
+    
+    
+    
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="יעדים">
+    <meta property="og:locale" content="he_IL">
+    <!-- Twitter Card Meta Tags -->
+    
+    
+    
+    
+    <meta name="twitter:image:alt" content="יעדים"><style id="zappy-ai-page-styles">.destinations-hero-section {
+  position: relative;
+  min-height: 78vh;
+  width: 100%;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  background-color: #0F4C5C;
+  color: var(--text-light);
+  padding-bottom: 80px;
+  direction: rtl;
+}
+
+/* Background Image */
+.destinations-hero-section .destinations-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.destinations-hero-section .destinations-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+/* Scrim Overlay — teal-to-plum gradient for readability */
+.destinations-hero-section .destinations-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(115deg,
+      rgba(109, 89, 122, 0.72) 0%,
+      rgba(15, 76, 92, 0.82) 45%,
+      rgba(10, 50, 62, 0.92) 100%
+    );
+}
+
+/* Grain Texture Overlay */
+.destinations-hero-section .destinations-hero-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.055'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.6;
+}
+
+/* Route Line SVG */
+.destinations-hero-section .destinations-hero-route {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Container */
+.destinations-hero-section .destinations-hero-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 48px 40px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Content Block — right side in RTL */
+.destinations-hero-section .destinations-hero-content {
+  max-width: 560px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  text-align: right;
+}
+
+/* Eyebrow Label */
+.destinations-hero-section .destinations-hero-eyebrow {
+  display: inline-block;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-inline-start: 3px solid var(--accent);
+  padding-inline-start: 10px;
+  line-height: 1.4;
+}
+
+/* H1 Headline */
+.destinations-hero-section .destinations-hero-title {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: clamp(48px, 7vw, 84px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text-light);
+  text-shadow: 0 4px 24px rgba(10, 30, 40, 0.55), 0 2px 8px rgba(10, 30, 40, 0.4);
+  margin: 0;
+}
+
+/* H3 Subtitle */
+.destinations-hero-section .destinations-hero-subtitle {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: rgba(250, 247, 242, 0.88);
+  text-shadow: 0 2px 8px rgba(10, 30, 40, 0.45);
+  margin: 0;
+  max-width: 480px;
+}
+
+/* CTA Button */
+.destinations-hero-section .destinations-hero-cta {
+  display: inline-block;
+  background: var(--accent);
+  color: #163F63;
+  border-radius: 2px;
+  padding: 14px 36px;
+  border: none;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  box-shadow: 0 6px 24px rgba(246, 189, 96, 0.38);
+  transition: all 0.32s ease;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.destinations-hero-section .destinations-hero-cta:hover {
+  background: #f5c94a;
+  box-shadow: 0 10px 32px rgba(246, 189, 96, 0.52);
+  transform: translateY(-3px);
+  color: #163F63;
+}
+
+/* Destination Labels Row */
+.destinations-hero-section .destinations-hero-labels {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  margin-top: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(250, 247, 242, 0.18);
+  width: 100%;
+}
+
+.destinations-hero-section .destinations-hero-label {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.75);
+  transition: color 0.25s ease;
+  padding: 0 16px;
+  cursor: default;
+}
+
+.destinations-hero-section .destinations-hero-label:first-child {
+  padding-inline-start: 0;
+}
+
+.destinations-hero-section .destinations-hero-label:hover {
+  color: var(--accent);
+}
+
+.destinations-hero-section .destinations-hero-separator {
+  display: block;
+  width: 1px;
+  height: 16px;
+  background-color: rgba(250, 247, 242, 0.3);
+  flex-shrink: 0;
+}
+
+/* Bottom Cream Fade Divider */
+.destinations-hero-section .destinations-hero-divider-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.destinations-hero-section .destinations-hero-divider-wrapper svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================
+   RESPONSIVE — MOBILE
+   ============================================ */
+@media (max-width: 768px) {
+  .destinations-hero-section {
+    min-height: 78vh;
+    padding-bottom: 80px;
+    align-items: flex-end;
+  }
+
+  .destinations-hero-section .destinations-hero-scrim {
+    background-image:
+      linear-gradient(160deg,
+        rgba(109, 89, 122, 0.55) 0%,
+        rgba(15, 76, 92, 0.88) 50%,
+        rgba(10, 50, 62, 0.97) 100%
+      );
+  }
+
+  .destinations-hero-section .destinations-hero-container {
+    padding: 100px 20px 32px;
+    justify-content: flex-start;
+  }
+
+  .destinations-hero-section .destinations-hero-content {
+    max-width: 100%;
+    gap: 16px;
+  }
+
+  .destinations-hero-section .destinations-hero-title {
+    font-size: 42px;
+  }
+
+  .destinations-hero-section .destinations-hero-subtitle {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  .destinations-hero-section .destinations-hero-cta {
+    padding: 13px 28px;
+    font-size: 14px;
+  }
+
+  .destinations-hero-section .destinations-hero-labels {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 16px;
+  }
+
+  .destinations-hero-section .destinations-hero-label {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  .destinations-hero-section .destinations-hero-route {
+    height: 200px;
+    bottom: 80px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .destinations-hero-section .destinations-hero-content {
+    max-width: 580px;
+  }
+
+  .destinations-hero-section .destinations-hero-title {
+    font-size: 80px;
+  }
+}
+
+.destinations-gallery-section {
+  direction: rtl;
+  background-color: #FFF8EF;
+  background-image: linear-gradient(180deg, #FFF8EF 0%, #F7E8D6 100%);
+  color: var(--text-dark);
+  padding: 120px 24px 100px;
+  position: relative;
+  overflow: visible;
+}
+
+.destinations-gallery-section .destinations-gallery-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.destinations-gallery-section .destinations-gallery-header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+
+.destinations-gallery-section .destinations-gallery-label {
+  display: inline-block;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 14px;
+}
+
+.destinations-gallery-section .destinations-gallery-title {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-dark);
+  margin: 0 0 16px;
+  max-width: none !important;
+}
+
+.destinations-gallery-section .destinations-gallery-subtitle {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* ── Grid ── */
+.destinations-gallery-section .destinations-gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  direction: rtl;
+}
+
+@media (min-width: 900px) {
+  .destinations-gallery-section .destinations-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 36px;
+  }
+}
+
+/* ── Card ── */
+.destinations-gallery-section .destination-card {
+  position: relative;
+  background: rgba(255, 248, 239, 0.92);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 10px 30px rgba(73, 41, 43, 0.12);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.destinations-gallery-section .destination-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(73, 41, 43, 0.18);
+}
+
+/* Featured middle card apricot wash */
+.destinations-gallery-section .destination-card--featured {
+  background: rgba(246, 189, 96, 0.08);
+  border-color: rgba(246, 189, 96, 0.45);
+  box-shadow: 0 18px 40px rgba(73, 41, 43, 0.15);
+}
+
+/* ── Corner ornaments ── */
+.destinations-gallery-section .destination-card-ornament {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.destinations-gallery-section .destination-card-ornament--tl {
+  top: -14px;
+  inset-inline-end: -14px;
+}
+
+.destinations-gallery-section .destination-card-ornament--br {
+  bottom: -14px;
+  inset-inline-start: -14px;
+}
+
+/* ── Image ── */
+.destinations-gallery-section .destination-card-image-wrap {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.destinations-gallery-section .destination-card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.55s ease;
+  border-radius: 0;
+}
+
+.destinations-gallery-section .destination-card:hover .destination-card-image-wrap img {
+  transform: scale(1.04);
+}
+
+/* ── Body ── */
+.destinations-gallery-section .destination-card-body {
+  padding: 28px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: right;
+  flex: 1;
+}
+
+.destinations-gallery-section .destination-card-name {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.destinations-gallery-section .destination-card-desc {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin: 0;
+  flex: 1;
+}
+
+/* ── CTA ── */
+.destinations-gallery-section .destination-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--primary);
+  padding-bottom: 2px;
+  align-self: flex-start;
+  transition: color 0.25s ease, border-color 0.25s ease, gap 0.25s ease;
+  margin-top: 4px;
+}
+
+.destinations-gallery-section .destination-card-cta:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  gap: 10px;
+}
+
+.destinations-gallery-section .destination-card--featured .destination-card-cta {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.destinations-gallery-section .destination-card--featured .destination-card-cta:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .destinations-gallery-section {
+    padding: 100px 16px 72px;
+  }
+
+  .destinations-gallery-section .destinations-gallery-header {
+    margin-bottom: 48px;
+  }
+
+  .destinations-gallery-section .destinations-gallery-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px;
+  }
+
+  .destinations-gallery-section .destination-card-ornament {
+    display: none;
+  }
+
+  .destinations-gallery-section .destination-card-image-wrap {
+    aspect-ratio: 4 / 3;
+  }
+
+  .destinations-gallery-section .destination-card-name {
+    font-size: 1.75rem;
+  }
+
+  .destinations-gallery-section .destination-card-body {
+    padding: 20px 16px 24px;
+  }
+}
+
+.destinations-services-section {
+  position: relative;
+  overflow: visible;
+  direction: rtl;
+  background-color: #0F2D38;
+  background-image:
+    radial-gradient(ellipse at 15% 20%, rgba(109,89,122,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(109,89,122,0.25) 0%, transparent 50%),
+    linear-gradient(175deg, #1a3d4d 0%, #0F2D38 45%, #0d2030 100%);
+  color: var(--text-light);
+  padding: 100px 24px 80px;
+}
+
+/* ── Decorative Route Lines ── */
+.destinations-services-section .dss-route-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.destinations-services-section .dss-route-lines svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Container ── */
+.destinations-services-section .dss-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Intro Block ── */
+.destinations-services-section .dss-intro {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 64px;
+}
+
+.destinations-services-section .dss-eyebrow {
+  display: inline-block;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(246,189,96,0.35);
+}
+
+.destinations-services-section .dss-heading {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-light);
+  margin: 0 0 20px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+.destinations-services-section .dss-intro-text {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  color: rgba(250,247,242,0.78);
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Feature Grid ── */
+.destinations-services-section .dss-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  direction: rtl;
+}
+
+/* ── Tile ── */
+.destinations-services-section .dss-tile {
+  position: relative;
+  background: rgba(255,248,239,0.07);
+  border: 1px solid rgba(255,246,235,0.13);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.destinations-services-section .dss-tile:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.35), 0 0 0 1px rgba(246,189,96,0.2);
+  border-color: rgba(246,189,96,0.28);
+}
+
+/* ── Accent Line at Top ── */
+.destinations-services-section .dss-tile-accent-line {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(246,189,96,0.3) 100%);
+  flex-shrink: 0;
+}
+
+/* ── Tile Image ── */
+.destinations-services-section .dss-tile-image-wrap {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  height: 180px;
+}
+
+.destinations-services-section .dss-tile-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+  filter: brightness(0.85) saturate(0.9);
+}
+
+.destinations-services-section .dss-tile:hover .dss-tile-image-wrap img {
+  transform: scale(1.04);
+  filter: brightness(0.95) saturate(1.05);
+}
+
+/* ── Tile Body ── */
+.destinations-services-section .dss-tile-body {
+  padding: 24px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+/* ── Tile Icon ── */
+.destinations-services-section .dss-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--accent);
+}
+
+/* ── Tile Title ── */
+.destinations-services-section .dss-tile-title {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-light);
+  margin: 0;
+  text-align: right;
+}
+
+/* ── Tile Text ── */
+.destinations-services-section .dss-tile-text {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.72;
+  color: rgba(250,247,242,0.72);
+  margin: 0;
+  text-align: right;
+  flex: 1;
+}
+
+/* ── Bottom Cream Divider ── */
+.destinations-services-section .dss-divider-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 48px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.destinations-services-section .dss-divider-wrapper svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .destinations-services-section .dss-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .destinations-services-section .dss-grid .dss-tile:last-child {
+    grid-column: 1 / -1;
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .destinations-services-section {
+    padding: 100px 16px 72px;
+  }
+
+  .destinations-services-section .dss-intro {
+    margin-bottom: 40px;
+  }
+
+  .destinations-services-section .dss-heading {
+    font-size: 1.65rem;
+  }
+
+  .destinations-services-section .dss-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+
+  .destinations-services-section .dss-grid .dss-tile:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+  }
+
+  .destinations-services-section .dss-tile-image-wrap {
+    height: 200px;
+  }
+
+  .destinations-services-section .dss-tile-body {
+    padding: 18px 18px 22px;
+  }
+}
+
+.destinations-about-section {
+  background-color: #FAF7F2;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cg fill='none' stroke='%23EBC9A7' stroke-width='1' stroke-opacity='0.45'%3E%3Cpath d='M5 20 L18 12 L31 18 L42 10 L56 18 L69 13 L82 19 L95 11 L108 17 L122 8 L136 16 L151 9 L166 16 L181 10'/%3E%3Cpath d='M8 48 L20 40 L34 46 L48 39 L61 45 L74 37 L88 43 L101 36 L116 42 L129 35 L143 41 L158 34 L174 40'/%3E%3Cpath d='M12 78 L28 70 L41 76 L54 68 L69 75 L84 66 L99 72 L112 64 L126 70 L140 63 L155 69 L171 61'/%3E%3Cpath d='M14 104 L31 96 L45 102 L58 94 L72 100 L88 92 L104 98 L118 90 L133 96 L149 89 L166 95'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(180deg, #FFF8EF 0%, #F7E8D6 100%);
+  background-size: 420px 252px, cover;
+  background-repeat: repeat, no-repeat;
+  color: var(--text-dark);
+  padding: 100px 0 80px;
+  direction: rtl;
+  position: relative;
+  overflow: visible;
+}
+
+.destinations-about-section .destinations-about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 56px;
+  direction: rtl;
+}
+
+/* ── TEXT COLUMN ── */
+.destinations-about-section .destinations-about-text-col {
+  flex: 0 0 58%;
+  max-width: 58%;
+  position: relative;
+  z-index: 2;
+}
+
+.destinations-about-section .destinations-about-text-inner {
+  padding-inline-end: 24px;
+}
+
+.destinations-about-section .destinations-about-eyebrow {
+  display: inline-block;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 14px;
+  text-align: right;
+}
+
+.destinations-about-section .destinations-about-h2 {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-dark);
+  margin: 0 0 20px 0;
+  text-align: right;
+}
+
+.destinations-about-section .destinations-about-intro {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin: 0 0 36px 0;
+  max-width: 560px;
+  text-align: right;
+}
+
+/* ── HIGHLIGHTS ── */
+.destinations-about-section .destinations-highlight {
+  margin-bottom: 0;
+}
+
+.destinations-about-section .destinations-highlight-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to left, var(--secondary), transparent);
+  opacity: 0.35;
+  margin-bottom: 24px;
+}
+
+.destinations-about-section .destinations-highlight-divider--last {
+  margin-bottom: 32px;
+}
+
+.destinations-about-section .destinations-highlight-content {
+  padding-bottom: 24px;
+}
+
+.destinations-about-section .destinations-highlight-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  direction: rtl;
+}
+
+.destinations-about-section .destinations-highlight-flag {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.destinations-about-section .destinations-highlight-h3 {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--primary);
+  margin: 0;
+  text-align: right;
+}
+
+.destinations-about-section .destinations-highlight-content p {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-dark);
+  margin: 0;
+  text-align: right;
+  max-width: 600px;
+}
+
+/* ── CTA ── */
+.destinations-about-section .destinations-about-cta {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary);
+  color: var(--text-light);
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 13px 28px;
+  border-radius: 2px;
+  transition: background-color 0.3s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 10px 30px rgba(73,41,43,0.12);
+  direction: rtl;
+}
+
+.destinations-about-section .destinations-about-cta i {
+  font-size: 0.875rem;
+  transition: transform 0.25s ease;
+}
+
+.destinations-about-section .destinations-about-cta:hover {
+  background-color: var(--secondary);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(73,41,43,0.18);
+}
+
+.destinations-about-section .destinations-about-cta:hover i {
+  transform: translateX(-4px);
+}
+
+/* ── IMAGE COLUMN ── */
+.destinations-about-section .destinations-about-image-col {
+  flex: 0 0 42%;
+  max-width: 42%;
+  position: relative;
+  min-height: 580px;
+  z-index: 1;
+}
+
+.destinations-about-section .destinations-about-image-stack {
+  position: relative;
+  width: 100%;
+  height: 580px;
+}
+
+/* Main large image */
+.destinations-about-section .destinations-about-img-main {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: 68%;
+  margin: 0;
+  padding: 0;
+  z-index: 3;
+  transform: rotate(2deg);
+  border: 4px solid #FFF8EF;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(73,41,43,0.18);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.destinations-about-section .destinations-about-img-main:hover {
+  transform: rotate(1deg) translateY(-6px);
+  box-shadow: 0 28px 60px rgba(73,41,43,0.24);
+}
+
+.destinations-about-section .destinations-about-img-main img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 3/4;
+}
+
+/* Secondary smaller image */
+.destinations-about-section .destinations-about-img-secondary {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 32px;
+  width: 55%;
+  margin: 0;
+  padding: 0;
+  z-index: 4;
+  transform: rotate(-2deg);
+  border: 4px solid #FFF8EF;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(73,41,43,0.22);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.destinations-about-section .destinations-about-img-secondary:hover {
+  transform: rotate(-1deg) translateY(-6px);
+  box-shadow: 0 18px 40px rgba(73,41,43,0.18);
+}
+
+.destinations-about-section .destinations-about-img-secondary img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 3/4;
+}
+
+/* Accent dot decoration */
+.destinations-about-section .destinations-about-img-accent-dot {
+  position: absolute;
+  inset-inline-end: -16px;
+  bottom: 80px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.25;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .destinations-about-section .destinations-about-container {
+    gap: 36px;
+    padding: 0 24px;
+  }
+
+  .destinations-about-section .destinations-about-h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .destinations-about-section {
+    padding: 100px 0 60px;
+  }
+
+  .destinations-about-section .destinations-about-container {
+    flex-direction: column;
+    gap: 48px;
+    padding: 0 16px;
+  }
+
+  .destinations-about-section .destinations-about-text-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .destinations-about-section .destinations-about-text-inner {
+    padding-inline-end: 0;
+  }
+
+  .destinations-about-section .destinations-about-h2 {
+    font-size: 1.625rem;
+  }
+
+  .destinations-about-section .destinations-about-image-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+    min-height: 340px;
+  }
+
+  .destinations-about-section .destinations-about-image-stack {
+    height: 340px;
+  }
+
+  .destinations-about-section .destinations-about-img-main {
+    width: 62%;
+    border-width: 3px;
+  }
+
+  .destinations-about-section .destinations-about-img-secondary {
+    width: 50%;
+    bottom: 16px;
+    border-width: 3px;
+  }
+
+  .destinations-about-section .destinations-about-img-accent-dot {
+    width: 48px;
+    height: 48px;
+    inset-inline-end: -8px;
+    bottom: 40px;
+  }
+
+  .destinations-about-section .destinations-about-intro {
+    max-width: 100%;
+  }
+
+  .destinations-about-section .destinations-highlight-content p {
+    max-width: 100%;
+  }
+}
+
+.destinations-cta-section {
+  position: relative;
+  overflow: visible;
+  background-color: #0F4C5C;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(109,89,122,0.38) 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(109,89,122,0.32) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(15,76,92,0.0) 0%, transparent 100%),
+    linear-gradient(180deg, #0d4555 0%, #0F4C5C 50%, #0b3d4a 100%);
+  color: var(--text-light);
+  padding: 90px 16px 80px;
+  direction: rtl;
+}
+
+/* Vignette overlay */
+.destinations-cta-section .destinations-cta-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(93,58,95,0.30) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(93,58,95,0.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, rgba(93,58,95,0.18) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 0%, rgba(93,58,95,0.18) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Aerial texture overlay */
+.destinations-cta-section .destinations-cta-texture {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cg fill='none' stroke='%23FAF7F2' stroke-width='0.6' stroke-opacity='0.07'%3E%3Cpath d='M5 20 L18 12 L31 18 L42 10 L56 18 L69 13 L82 19 L95 11 L108 17 L122 8 L136 16 L151 9 L166 16 L181 10'/%3E%3Cpath d='M8 48 L20 40 L34 46 L48 39 L61 45 L74 37 L88 43 L101 36 L116 42 L129 35 L143 41 L158 34 L174 40'/%3E%3Cpath d='M12 78 L28 70 L41 76 L54 68 L69 75 L84 66 L99 72 L112 64 L126 70 L140 63 L155 69 L171 61'/%3E%3Cpath d='M14 104 L31 96 L45 102 L58 94 L72 100 L88 92 L104 98 L118 90 L133 96 L149 89 L166 95'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 420px 252px;
+  background-repeat: repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Main container */
+.destinations-cta-section .destinations-cta-container {
+  position: relative;
+  z-index: 10;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Narrow content block */
+.destinations-cta-section .destinations-cta-content {
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Eyebrow label */
+.destinations-cta-section .destinations-cta-eyebrow {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px 0;
+  opacity: 0.9;
+}
+
+/* H2 heading */
+.destinations-cta-section .destinations-cta-heading {
+  font-family: 'Cormorant Garamond', 'Noto Serif Hebrew', serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-light);
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+/* Body paragraph */
+.destinations-cta-section .destinations-cta-body {
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-light);
+  opacity: 0.88;
+  margin: 0 0 36px 0;
+  text-align: center;
+  max-width: none !important;
+}
+
+/* Button row */
+.destinations-cta-section .destinations-cta-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Primary button */
+.destinations-cta-section .destinations-btn-primary {
+  display: inline-block;
+  background: var(--accent);
+  color: #163F63;
+  padding: 13px 32px;
+  border-radius: 2px;
+  border: none;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(246,189,96,0.28);
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.destinations-cta-section .destinations-btn-primary:hover {
+  background: #f5b040;
+  box-shadow: 0 10px 24px rgba(246,189,96,0.38);
+  transform: translateY(-2px);
+}
+
+/* Ghost / secondary button */
+.destinations-cta-section .destinations-btn-ghost {
+  display: inline-block;
+  background: transparent;
+  color: var(--text-light);
+  border: 1px solid rgba(250,247,242,0.60);
+  padding: 12px 30px;
+  border-radius: 2px;
+  font-family: 'Heebo', 'Assistant', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: border-color 0.22s ease, background 0.22s ease, transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.destinations-cta-section .destinations-btn-ghost:hover {
+  border-color: var(--accent);
+  background: rgba(246,189,96,0.08);
+  transform: translateY(-2px);
+}
+
+/* Saffron route curve SVG wrapper */
+.destinations-cta-section .destinations-cta-curve-wrapper {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.destinations-cta-section .destinations-cta-curve-wrapper svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Responsive ─── */
+@media (min-width: 768px) {
+  .destinations-cta-section {
+    padding: 110px 40px 100px;
+  }
+
+  .destinations-cta-section .destinations-cta-heading {
+    font-size: 2.5rem;
+  }
+
+  .destinations-cta-section .destinations-cta-content {
+    max-width: 580px;
+  }
+}
+
+@media (max-width: 767px) {
+  .destinations-cta-section {
+    padding: 70px 16px 70px;
+  }
+
+  .destinations-cta-section .destinations-cta-heading {
+    font-size: 1.75rem;
+  }
+
+  .destinations-cta-section .destinations-cta-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .destinations-cta-section .destinations-btn-primary,
+  .destinations-cta-section .destinations-btn-ghost {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+  }
+
+  .destinations-cta-section .destinations-cta-curve-wrapper {
+    bottom: 14px;
+    height: 40px;
+  }
+}</style>
+    <link rel="stylesheet" href="/styles.css">
+
+    <style id="zappy-dropdown-submenu-styles">
+      /* ========== DESKTOP DROPDOWN SUBMENU STYLES ========== */
+      /* Base styles for dropdown submenus - parent must be positioned */
+      .nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu) { position: relative; }
+      /* Submenu base - hidden by default */
+      .nav-menu .sub-menu, nav .sub-menu, .navbar .sub-menu, #navMenu .sub-menu { display: block !important; position: absolute !important; top: 100%; left: 0; min-width: 220px; background: white; border-radius: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 8px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1000; list-style: none; pointer-events: none; }
+      /* CRITICAL: Desktop hover styles to show dropdown */
+      .nav-menu li:hover > .sub-menu, nav li:hover > .sub-menu, .navbar li:hover > .sub-menu, #navMenu li:hover > .sub-menu { opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; pointer-events: auto !important; }
+      /* Submenu item styling */
+      .sub-menu li { list-style: none; margin: 0; padding: 0; }
+      .sub-menu a { display: block !important; padding: 10px 16px !important; color: var(--text-dark, #333) !important; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 0.2s; }
+      .sub-menu .zappy-nav-child > a { padding-left: 28px !important; font-size: 0.9em !important; opacity: 0.85 !important; }
+      [dir="rtl"] .sub-menu .zappy-nav-child > a, html[lang="he"] .sub-menu .zappy-nav-child > a, html[lang="ar"] .sub-menu .zappy-nav-child > a { padding-left: 10px !important; padding-right: 28px !important; }
+      .sub-menu .zappy-nav-parent > a { font-weight: 600 !important; }
+      .sub-menu a:hover { background-color: #f5f5f5; }
+      /* RTL (Hebrew/Arabic) dropdown positioning */
+      [dir="rtl"] .nav-menu .sub-menu, [dir="rtl"] nav .sub-menu, [dir="rtl"] .navbar .sub-menu, html[lang="he"] .nav-menu .sub-menu, html[lang="he"] nav .sub-menu, html[lang="he"] .navbar .sub-menu, html[lang="ar"] .nav-menu .sub-menu, html[lang="ar"] nav .sub-menu, html[lang="ar"] .navbar .sub-menu { left: auto !important; right: 0 !important; }
+      /* Hide empty dropdown menus (exclude catalog sub-menus that use <a> children instead of <li>) */
+      .sub-menu:empty, .sub-menu:not(:has(li:not(.zappy-hidden-menu-item))):not(:has(> a)), .sub-menu:not(:has(li)):not(:has(> a)) { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+      /* Desktop: show submenu on Menu Group hover */
+      li:has(.menu-group-title):hover > .sub-menu { opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; pointer-events: auto !important; }
+      /* Menu Group title styling */
+      .nav-menu > li > .menu-group-title, #navMenu > li > .menu-group-title { display: inline-block; padding: 0.5rem 1rem; cursor: default; user-select: none; }
+      
+      /* ========== MOBILE SUBMENU STYLES ========== */
+      @media (max-width: 768px) {
+        .nav-menu .sub-menu, nav .sub-menu, .navbar .sub-menu, #navMenu .sub-menu { position: static !important; transform: none !important; box-shadow: none !important; background: transparent !important; max-height: 0; overflow: hidden; opacity: 0; visibility: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; padding: 0 !important; border-radius: 0 !important; }
+        .navbar .sub-menu.mobile-expanded, .nav-menu .sub-menu.mobile-expanded, #navMenu .sub-menu.mobile-expanded { max-height: none !important; overflow-y: visible !important; opacity: 1 !important; visibility: visible !important; padding: 8px 0 8px 16px !important; }
+        [dir="rtl"] .sub-menu.mobile-expanded, html[lang="he"] .sub-menu.mobile-expanded { padding: 8px 16px 8px 0 !important; }
+        /* Disable hover behavior on mobile */
+        .nav-menu li:hover > .sub-menu, nav li:hover > .sub-menu, .navbar li:hover > .sub-menu, #navMenu li:hover > .sub-menu { opacity: 0; visibility: hidden; pointer-events: none; }
+        .nav-menu li > .sub-menu.mobile-expanded, nav li > .sub-menu.mobile-expanded, .navbar li > .sub-menu.mobile-expanded, #navMenu li > .sub-menu.mobile-expanded { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+        .nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; position: relative !important; min-height: 44px !important; }
+        .nav-menu li:has(.sub-menu) > a, nav li:has(.sub-menu) > a, .navbar li:has(.sub-menu) > a, #navMenu li:has(.sub-menu) > a { flex: 1 !important; min-width: 0 !important; }
+        .nav-menu li:has(.sub-menu) > .menu-group-title, nav li:has(.sub-menu) > .menu-group-title, .navbar li:has(.sub-menu) > .menu-group-title, #navMenu li:has(.sub-menu) > .menu-group-title { flex: 1 !important; min-width: 0 !important; padding: 0 !important; line-height: inherit !important; }
+        .nav-menu li:has(.sub-menu) > .sub-menu, nav li:has(.sub-menu) > .sub-menu, .navbar li:has(.sub-menu) > .sub-menu, #navMenu li:has(.sub-menu) > .sub-menu { flex-basis: 100% !important; width: 100% !important; }
+        .nav-menu li:has(.sub-menu) > a [class*="chevron"], .nav-menu li:has(.sub-menu) > a [class*="arrow"], .nav-menu li:has(.sub-menu) > a .fa-chevron-down, .nav-menu li:has(.sub-menu) > a .fa-angle-down, nav li:has(.sub-menu) > a [class*="chevron"], nav li:has(.sub-menu) > a [class*="arrow"], #navMenu li:has(.sub-menu) > a [class*="chevron"], #navMenu li:has(.sub-menu) > a [class*="arrow"] { display: none !important; visibility: hidden !important; }
+        .mobile-submenu-toggle { display: flex !important; align-items: center !important; justify-content: center !important; width: 44px !important; height: auto !important; background: transparent !important; border: none !important; cursor: pointer !important; color: var(--text-dark) !important; position: static !important; flex-shrink: 0 !important; align-self: stretch !important; z-index: 2 !important; padding: 0 !important; margin: 0 !important; }
+        .mobile-submenu-toggle::after { content: '' !important; width: 0 !important; height: 0 !important; border-left: 6px solid transparent !important; border-right: 6px solid transparent !important; border-top: 7px solid currentColor !important; transition: transform 0.3s ease !important; }
+        .mobile-submenu-toggle.expanded::after { transform: rotate(180deg) !important; }
+        .sub-menu a { padding: 10px 0 !important; display: block !important; color: var(--text-dark) !important; white-space: normal !important; }
+        .sub-menu .zappy-nav-child > a { padding-left: 28px !important; font-size: 0.9em !important; opacity: 0.85 !important; }
+        [dir="rtl"] .sub-menu .zappy-nav-child > a, html[lang="he"] .sub-menu .zappy-nav-child > a, html[lang="ar"] .sub-menu .zappy-nav-child > a { padding-left: 0 !important; padding-right: 28px !important; }
+        .sub-menu .zappy-nav-parent > a { font-weight: 600 !important; }
+        .nav-menu.active, #navMenu.active { max-width: 100vw !important; overflow-x: hidden !important; box-sizing: border-box !important; }
+        .navbar .sub-menu li a, nav.navbar .sub-menu li a, .zappy-products-dropdown .sub-menu a { color: var(--text-dark) !important; }
+      }
+      @media (min-width: 769px) { .mobile-submenu-toggle { display: none !important; } }
+    </style>
+
+    <style id="mobile-lang-menu-deployed-css">
+    @media (max-width: 768px) {
+      .lang-switcher,
+      .nav-cta-container .lang-switcher,
+      .nav-container .lang-switcher,
+      .navbar .lang-switcher,
+      .navbar .nav-cta-container .lang-switcher,
+      .nav-icons-left .lang-switcher,
+      .nav-ecommerce-icons .lang-switcher { display: none !important; }
+      .mobile-lang-menu { width: 100%; border-top: 1px solid rgba(128,128,128,0.2); padding: 8px 0 0 0; margin-top: 8px; }
+      .mobile-lang-toggle { display: flex !important; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: none; border: none; cursor: pointer; font-size: 15px; color: inherit; font-family: inherit; }
+      .mobile-lang-toggle::after { content: ''; display: inline-block; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.3s ease; margin-left: 8px; }
+      .mobile-lang-toggle.expanded::after { transform: rotate(-135deg); }
+      .mobile-lang-options { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+      .mobile-lang-options.expanded { max-height: 300px; }
+      .mobile-lang-option { display: flex !important; align-items: center; gap: 10px; padding: 10px 24px; text-decoration: none; color: inherit; font-size: 14px; font-family: inherit; }
+      .mobile-lang-option:hover { background: rgba(128,128,128,0.1); }
+      .mobile-lang-option.active { font-weight: 600; opacity: 0.7; pointer-events: none; }
+      .mobile-lang-option img { width: 20px; height: 20px; border-radius: 50%; }
+    }
+    @media (min-width: 769px) {
+      .mobile-lang-menu { display: none !important; }
+    }
+    </style>
+
+    <style id="zappy-widget-visibility">
+      #mic-access-tool-general-button, .mic-access-tool-general-button,
+      #mic-init-access-tool .mic-access-tool-general-button, #mic-init-access-tool #mic-access-tool-general-button,
+      ._access-icon, #mic-access-tool-box, .mic-access-tool-box,
+      #mic-init-access-tool #mic-access-tool-box, div[id*="mic-access-tool-box"], ._access-menu {
+        display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+      }
+    </style>
+</head>
+<body>
+
+  <nav class="navbar" dir="rtl">
+  <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+    <svg class="hamburger-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+    <svg class="close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" style="display: none;">
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+  </button>
+
+  <button class="phone-header-btn" data-phone="[business_phone]" aria-label="Call">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+    </svg>
+  </button>
+
+  <div class="nav-container">
+    <div class="nav-right-group"><div class="nav-brand">
+      <a href="/" class="logo-link">
+        <img src="/assets/business-logo.webp" alt="מינוף טורס" class="logo">
+      </a>
+    </div><ul class="nav-menu" id="navMenu"><li><a href="/" data-i18n="nav-home">בית</a></li><li><a href="/services">שירותי נסיעות</a></li><li><a href="/about">אודות</a></li><li><a href="/destinations" class="nav-link">יעדים</a></li></ul></div>
+
+    
+
+    <div class="nav-cta-container">
+      <a href="/contact" class="nav-cta-btn">צור קשר</a>
+    </div>
+  </div>
+</nav>
+<script>
+
+// Navbar Mobile Menu Toggle and Contrast Fix
+(function() {
+  // Use 'load' event instead of 'DOMContentLoaded' to ensure we run AFTER all other scripts
+  window.addEventListener('load', function() {
+    
+    // FIX MOBILE BUTTON CONTRAST
+    // Detect navbar background color and apply contrasting color to mobile buttons
+    const navbar = document.querySelector('.navbar, nav, header');
+    if (!navbar) {
+      console.log('[Navbar] Navbar element not found');
+      return;
+    }
+    
+    // DECLARE VARIABLES EARLY to avoid Temporal Dead Zone errors
+    // These are used in multiple places below
+    let mobileToggle = document.getElementById('mobileToggle') ||
+                       document.querySelector('.mobile-toggle') ||
+                       document.querySelector('.hamburger') ||
+                       document.querySelector('.hamburger-menu') ||
+                       document.querySelector('.menu-toggle') ||
+                       document.querySelector('.burger-menu') ||
+                       document.querySelector('[aria-label="Menu"]') ||
+                       document.querySelector('[aria-label="תפריט"]');
+    
+    const phoneBtn = document.querySelector('.phone-header-btn');
+    
+    const computedStyle = window.getComputedStyle(navbar);
+    let bgColor = computedStyle.backgroundColor;
+    
+    console.log('[Navbar] Initial navbar background:', bgColor);
+    
+    // Check if background is transparent or rgba with 0 alpha
+    const isTransparent = bgColor === 'transparent' || 
+                         bgColor === 'rgba(0, 0, 0, 0)' ||
+                         (bgColor.startsWith('rgba') && bgColor.includes(', 0)'));
+    
+    if (isTransparent) {
+      // Check for background-image or gradient
+      const bgImage = computedStyle.backgroundImage;
+      if (bgImage && bgImage !== 'none') {
+        console.log('[Navbar] Navbar has background image/gradient, using dark text');
+        bgColor = 'rgb(240, 240, 240)'; // Assume light background
+      } else {
+        // Transparent navbar - check body background
+        const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+        console.log('[Navbar] Navbar transparent, using body background:', bodyBg);
+        bgColor = bodyBg;
+      }
+    }
+    
+    // Calculate luminance to determine if background is light or dark
+    const rgb = bgColor.match(/\d+/g);
+    if (rgb && rgb.length >= 3) {
+      const r = parseInt(rgb[0]);
+      const g = parseInt(rgb[1]);
+      const b = parseInt(rgb[2]);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // Mobile button colors are set by Claude's AI-generated CSS (same as .nav-menu a)
+      // No dynamic color overrides needed - colors come from the generated navbar CSS
+      console.log('[Navbar] Mobile button colors preserved from Claude CSS (luminance:', luminance.toFixed(2) + ')');
+      
+      // FIX ICON SIZES - Ensure SVGs are properly sized and visible
+      // INJECT CRITICAL CSS TO OVERRIDE ANY CONFLICTING RULES
+      const criticalCSS = document.createElement('style');
+      criticalCSS.id = 'zappy-mobile-nav-fix';
+      const htmlLang = document.documentElement.lang || 'en';
+      const htmlDir = document.documentElement.dir || 'ltr';
+      // Check both dir attribute AND lang for RTL detection
+      // dir="rtl" is the most reliable indicator
+      const isRTL = htmlDir === 'rtl' || htmlLang === 'he' || htmlLang === 'ar';
+      
+      criticalCSS.textContent = `
+        /* Hide mobile buttons on desktop, show only on mobile */
+        @media (min-width: 769px) {
+          .mobile-toggle,
+          .phone-header-btn {
+            display: none !important;
+          }
+        }
+        
+        /* Show and position mobile buttons correctly on mobile */
+        @media (max-width: 768px) {
+          .mobile-toggle,
+          .phone-header-btn {
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 1001 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 50% !important;
+            border: none !important;
+            cursor: pointer !important;
+            padding: 6px !important;
+            background: none !important;
+            color: var(--nav-text, var(--text-dark)) !important;
+          }
+          
+          /* LTR positioning (default): hamburger LEFT, phone RIGHT */
+          html:not([dir="rtl"]):not([lang="he"]):not([lang="ar"]) .mobile-toggle,
+          html[dir="ltr"] .mobile-toggle {
+            left: 12px !important;
+            right: auto !important;
+          }
+          html:not([dir="rtl"]):not([lang="he"]):not([lang="ar"]) .phone-header-btn,
+          html[dir="ltr"] .phone-header-btn {
+            right: 12px !important;
+            left: auto !important;
+          }
+          
+          /* RTL positioning: hamburger RIGHT, phone LEFT */
+          html[dir="rtl"] .mobile-toggle,
+          html[lang="he"] .mobile-toggle,
+          html[lang="ar"] .mobile-toggle {
+            right: 12px !important;
+            left: auto !important;
+          }
+          html[dir="rtl"] .phone-header-btn,
+          html[lang="he"] .phone-header-btn,
+          html[lang="ar"] .phone-header-btn {
+            left: 12px !important;
+            right: auto !important;
+          }
+          
+          /* CRITICAL: Ensure nav-container has min-height on mobile */
+          /* All children are positioned absolutely/fixed on mobile, so height:auto collapses to 0 */
+          .nav-container {
+            min-height: 70px !important;
+            position: relative !important;
+          }
+          
+          /* Ensure SVG icons are properly sized and inherit color */
+          .mobile-toggle svg,
+          .phone-header-btn svg {
+            width: 24px !important;
+            height: 24px !important;
+            /* Don't force display - let JavaScript control hamburger/close toggle */
+          }
+          
+          /* Reset nav-cta-container on mobile - remove desktop box-shadow/padding */
+          /* that creates a visible ghost box when CTA button is hidden */
+          .nav-cta-container {
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+          
+          /* Hide nav-cta-container entirely on mobile when there's no lang-switcher */
+          /* (only the CTA button is inside, and it's hidden on mobile) */
+          .nav-cta-container:not(:has(.lang-switcher)) {
+            display: none !important;
+          }
+          
+          /* CRITICAL: Prevent hero image fade gradient from bleeding over headline text */
+          /* The .image-fade-gradient has bottom: -30px (extends below parent) */
+          /* On mobile stacked layout, this overlaps the h1 text below the image */
+          .hero-image-column {
+            overflow: hidden !important;
+          }
+          .image-fade-gradient {
+            bottom: 0 !important;
+          }
+          
+          /* Hide desktop language switcher on mobile - hamburger menu handles it */
+          /* High specificity to override stored CSS */
+          .lang-switcher,
+          .nav-cta-container .lang-switcher,
+          .nav-container .lang-switcher,
+          .navbar .lang-switcher,
+          .navbar .nav-cta-container .lang-switcher {
+            display: none !important;
+          }
+        }
+      `;
+      
+      // Remove existing fix if present and inject new one
+      const existing = document.getElementById('zappy-mobile-nav-fix');
+      if (existing) existing.remove();
+      document.head.appendChild(criticalCSS);
+      
+      console.log('[Navbar] Critical CSS injected for mobile nav positioning');
+      
+      // ONLY apply inline positioning styles on mobile viewport
+      // On desktop, the CSS handles hiding these buttons with display: none
+      // Inline styles were breaking desktop layout by overriding CSS
+      const isMobileViewport = window.innerWidth <= 768;
+      
+      if (mobileToggle) {
+        // Icon sizing applies to all viewports for consistency
+        const hamburgerIcon = mobileToggle.querySelector('.hamburger-icon');
+        const closeIcon = mobileToggle.querySelector('.close-icon');
+        
+        if (hamburgerIcon) {
+          hamburgerIcon.style.setProperty('width', '24px', 'important');
+          hamburgerIcon.style.setProperty('height', '24px', 'important');
+          hamburgerIcon.style.setProperty('display', 'block', 'important'); // Show hamburger by default
+        }
+        if (closeIcon) {
+          closeIcon.style.setProperty('width', '24px', 'important');
+          closeIcon.style.setProperty('height', '24px', 'important');
+          closeIcon.style.setProperty('display', 'none', 'important'); // Hide close icon by default
+        }
+        
+        // ONLY set positioning inline styles on mobile
+        if (isMobileViewport) {
+          mobileToggle.style.setProperty('position', 'absolute', 'important');
+          mobileToggle.style.setProperty('top', '50%', 'important');
+          mobileToggle.style.setProperty('transform', 'translateY(-50%)', 'important');
+          mobileToggle.style.setProperty('z-index', '1001', 'important');
+          
+          // Clear any inline left/right so CSS can take over based on html[dir]
+          mobileToggle.style.removeProperty('left');
+          mobileToggle.style.removeProperty('right');
+          
+          console.log('[Navbar] Mobile toggle positioning applied (mobile viewport)');
+        } else {
+          // On desktop, clear any positioning styles to let CSS handle it
+          mobileToggle.style.removeProperty('position');
+          mobileToggle.style.removeProperty('top');
+          mobileToggle.style.removeProperty('transform');
+          mobileToggle.style.removeProperty('z-index');
+          mobileToggle.style.removeProperty('left');
+          mobileToggle.style.removeProperty('right');
+          console.log('[Navbar] Desktop viewport - cleared mobile toggle inline positioning');
+        }
+      }
+      
+      if (phoneBtn) {
+        // Icon sizing applies to all viewports
+        const phoneIcon = phoneBtn.querySelector('svg');
+        if (phoneIcon) {
+          phoneIcon.style.width = '24px';
+          phoneIcon.style.height = '24px';
+          phoneIcon.setAttribute('width', '24');
+          phoneIcon.setAttribute('height', '24');
+        }
+        
+        // ONLY set positioning inline styles on mobile
+        if (isMobileViewport) {
+          phoneBtn.style.setProperty('position', 'absolute', 'important');
+          phoneBtn.style.setProperty('top', '50%', 'important');
+          phoneBtn.style.setProperty('transform', 'translateY(-50%)', 'important');
+          phoneBtn.style.setProperty('z-index', '1001', 'important');
+          
+          // Clear any inline left/right so CSS can take over based on html[dir]
+          phoneBtn.style.removeProperty('left');
+          phoneBtn.style.removeProperty('right');
+          
+          console.log('[Navbar] Phone button positioning applied (mobile viewport)');
+        } else {
+          // On desktop, clear any positioning styles to let CSS handle it
+          phoneBtn.style.removeProperty('position');
+          phoneBtn.style.removeProperty('top');
+          phoneBtn.style.removeProperty('transform');
+          phoneBtn.style.removeProperty('z-index');
+          phoneBtn.style.removeProperty('left');
+          phoneBtn.style.removeProperty('right');
+          console.log('[Navbar] Desktop viewport - cleared phone button inline positioning');
+        }
+      }
+    } else {
+      console.log('[Navbar] Could not parse background color:', bgColor);
+    }
+    
+    // MOBILE MENU TOGGLE
+    // Re-query in case DOM changed (mobileToggle already declared at top of function)
+    mobileToggle = document.getElementById('mobileToggle') ||
+                   document.querySelector('.mobile-toggle') ||
+                   document.querySelector('.hamburger') ||
+                   document.querySelector('.hamburger-menu') ||
+                   document.querySelector('.menu-toggle') ||
+                   document.querySelector('.burger-menu') ||
+                   document.querySelector('[aria-label="Menu"]') ||
+                   document.querySelector('[aria-label="תפריט"]');
+    
+    // EXPANDED SEARCH: Find nav menu by ID or class
+    const navMenu = document.getElementById('navMenu') ||
+                  document.querySelector('.nav-menu') ||
+                  document.querySelector('.nav-links') ||
+                  document.querySelector('nav ul:not(.submenu)');
+    
+    if (!mobileToggle || !navMenu) {
+      console.log('[Navbar] Mobile toggle or menu not found:', { toggle: !!mobileToggle, menu: !!navMenu });
+      return;
+    }
+    
+    // Ensure navMenu has ID for CSS targeting
+    if (!navMenu.id) {
+      navMenu.id = 'navMenu';
+    }
+    
+    console.log('[Navbar] Initializing mobile menu...');
+    
+    // Remove any existing event listeners by cloning the button
+    const newToggle = mobileToggle.cloneNode(true);
+    mobileToggle.parentNode.replaceChild(newToggle, mobileToggle);
+    
+    // Toggle menu on button click - use newToggle now
+    newToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const hamburgerIcon = this.querySelector('.hamburger-icon');
+      const closeIcon = this.querySelector('.close-icon');
+      const isActive = navMenu.classList.contains('active');
+      
+      if (isActive) {
+        // Close menu
+        navMenu.classList.remove('active');
+        if (hamburgerIcon) hamburgerIcon.style.setProperty('display', 'block', 'important');
+        if (closeIcon) closeIcon.style.setProperty('display', 'none', 'important');
+        document.body.style.overflow = '';
+        console.log('[Navbar] Menu closed');
+      } else {
+        // Open menu
+        navMenu.classList.add('active');
+        if (hamburgerIcon) hamburgerIcon.style.setProperty('display', 'none', 'important');
+        if (closeIcon) closeIcon.style.setProperty('display', 'block', 'important');
+        document.body.style.overflow = 'hidden';
+        console.log('[Navbar] Menu opened');
+      }
+    });
+    
+    // Close menu when clicking nav links (but NOT dropdown toggles)
+    const navLinks = navMenu.querySelectorAll('a');
+    navLinks.forEach(function(link) {
+      link.addEventListener('click', function() {
+        // Don't close if it's a dropdown child (unless it's a real navigation link)
+        if (this.getAttribute('href') === '#') return;
+        
+        const hamburgerIcon = newToggle.querySelector('.hamburger-icon');
+        const closeIcon = newToggle.querySelector('.close-icon');
+        
+        navMenu.classList.remove('active');
+        if (hamburgerIcon) hamburgerIcon.style.setProperty('display', 'block', 'important');
+        if (closeIcon) closeIcon.style.setProperty('display', 'none', 'important');
+        document.body.style.overflow = '';
+        console.log('[Navbar] Menu closed (link clicked)');
+      });
+    });
+    
+    // DROPDOWN MENU TOGGLE (for mobile and touch devices)
+    var dropdownToggles = navMenu.querySelectorAll('.dropdown-toggle');
+    dropdownToggles.forEach(function(toggle) {
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var parent = this.closest('.nav-dropdown');
+        if (!parent) return;
+        
+        // Close other open dropdowns at the same level
+        var siblings = parent.parentNode.querySelectorAll('.nav-dropdown.open');
+        siblings.forEach(function(sib) {
+          if (sib !== parent) sib.classList.remove('open');
+        });
+        
+        parent.classList.toggle('open');
+        console.log('[Navbar] Dropdown toggled:', parent.classList.contains('open') ? 'open' : 'closed');
+      });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.nav-dropdown')) {
+        var openDropdowns = document.querySelectorAll('.nav-dropdown.open');
+        openDropdowns.forEach(function(dd) { dd.classList.remove('open'); });
+      }
+    });
+    
+    console.log('[Navbar] Dropdown handlers initialized for ' + dropdownToggles.length + ' dropdowns');
+    
+    // Phone button functionality (phoneBtn already declared at top of function)
+    if (phoneBtn) {
+      phoneBtn.addEventListener('click', function() {
+        // Get phone number from placeholder in page or use default
+        const phoneLinks = document.querySelectorAll('a[href^="tel:"]');
+        const phoneNumber = phoneLinks.length > 0 
+          ? phoneLinks[0].getAttribute('href').replace('tel:', '')
+          : '[business_phone]';
+        
+        window.location.href = 'tel:' + phoneNumber;
+        console.log('[Navbar] Phone button clicked');
+      });
+    }
+    
+    console.log('[Navbar] Mobile menu initialized successfully');
+    
+    // === WHATSAPP BUTTON VISIBILITY FIX ===
+    // Ensure WhatsApp floating button is hidden on desktop and visible on mobile
+    // IMPORTANT: Only target the floating button by its class, NOT generic wa.me links
+    const handleWhatsAppVisibility = function() {
+      const whatsappBtn = document.querySelector('.whatsapp-float');
+      if (whatsappBtn) {
+        const isDesktop = window.innerWidth >= 769;
+        if (isDesktop) {
+          whatsappBtn.style.setProperty('display', 'none', 'important');
+          whatsappBtn.style.setProperty('visibility', 'hidden', 'important');
+          whatsappBtn.style.setProperty('opacity', '0', 'important');
+          whatsappBtn.style.setProperty('pointer-events', 'none', 'important');
+          console.log('[WhatsApp] Button hidden on desktop');
+        } else {
+          whatsappBtn.style.removeProperty('display');
+          whatsappBtn.style.removeProperty('visibility');
+          whatsappBtn.style.removeProperty('opacity');
+          whatsappBtn.style.removeProperty('pointer-events');
+          console.log('[WhatsApp] Button visible on mobile');
+        }
+      }
+    };
+    
+    // Run on load
+    handleWhatsAppVisibility();
+    
+    // Run on resize with debouncing
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleWhatsAppVisibility, 100);
+    });
+  });
+})();
+
+</script>
+  
+  <main class="blog-page ai-generated-page"><section class="destinations-hero-section" data-layout-spec="יעדים-hero" dir="rtl" data-hero-type="fullscreen-scrim" id="destinations-hero-section">
+  <!-- Background Image Layer -->
+  <div class="destinations-hero-bg">
+    <div data-zappy-zoom-wrapper="true" data-element-id="img-1776347788915-5gn6l9ogn" data-element-type="image" data-zappy-zoom-wrapper-width-mode="full" data-zappy-zoom-clip="true" data-zappy-wrapper-margins-applied="true" style="position: absolute !important; top: 0px !important; left: 0px !important; width: 100% !important; height: 100% !important; max-width: none !important; margin-left: 0px !important; margin-right: 0px !important; display: block !important; z-index: 1 !important; overflow: hidden !important;"><img data-hero-bg="true" data-context="Breathtaking aerial view of a vibrant international travel destination, showing iconic landscapes — a mosaic of ancient medinas, lush jungle canopies, and golden desert dunes blending together in a single dramatic wide-angle composition, warm cinematic lighting, rich colors, travel magazine quality photography" width="1200" height="780" src="/assets/section-hero-destinations-hero-image-1.webp" alt="יעדים בינלאומיים — מינוף טורס" data-zappy-editable-image="true" data-hero-background="true" data-element-type="image" data-element-id="img-1776347788915-5gn6l9ogn" data-zappy-zoom="1.3" data-zappy-object-position="32% 30%" style="object-position: 32% 30% !important; margin: 0px !important; position: absolute !important; left: -9.6% !important; top: -79.0875% !important; width: 130% !important; height: 363.625% !important; max-width: none !important; max-height: none !important; display: block !important; object-fit: cover !important"></div>
+  </div>
+
+  <!-- Scrim Overlay -->
+  <div class="destinations-hero-scrim" aria-hidden="true"></div>
+
+  <!-- Grain Texture Overlay -->
+  <div class="destinations-hero-grain" aria-hidden="true"></div>
+
+  <!-- Route Line SVG -->
+  <svg class="destinations-hero-route" data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1200,280 Q950,220 700,180 Q450,140 200,100 Q100,80 0,60" stroke="rgba(246,189,96,0.22)" stroke-width="1.5" fill="none" stroke-dasharray="8 6"></path>
+    <path d="M1200,240 Q900,190 620,155 Q380,125 120,90" stroke="rgba(246,189,96,0.12)" stroke-width="1" fill="none" stroke-dasharray="4 8"></path>
+    <circle cx="1100" cy="272" r="4" fill="rgba(246,189,96,0.45)"></circle>
+    <circle cx="700" cy="178" r="3" fill="rgba(246,189,96,0.35)"></circle>
+    <circle cx="300" cy="112" r="4" fill="rgba(246,189,96,0.45)"></circle>
+    <circle cx="100" cy="68" r="3" fill="rgba(246,189,96,0.3)"></circle>
+  </svg>
+
+  <!-- Main Content -->
+  <div class="destinations-hero-container">
+    <div class="destinations-hero-content">
+      <p class="zappy-editable"><span class="destinations-hero-eyebrow">חוויות בינלאומיות בלתי נשכחות</span>
+      </p><h1 class="destinations-hero-title">העולם מחכה לכם</h1>
+      <h3 class="destinations-hero-subtitle">מינוף טורס מעצבת עבורכם מסעות מותאמים אישית ליעדים הכי מרהיבים בעולם — מהכנות ועד הנחיתה</h3>
+      <p class="zappy-editable"><a href="/contact" class="destinations-hero-cta btn-pill" data-element-type="button" data-element-id="btn-1776347788911-hfrgl4i6o" data-native-element="true">תכננו את המסע שלכם</a>
+
+      </p><!-- Destination Labels -->
+      <div class="destinations-hero-labels" role="list">
+        <span class="destinations-hero-label" role="listitem">אתיופיה</span>
+        <span class="destinations-hero-separator" aria-hidden="true"></span>
+        <span class="destinations-hero-label" role="listitem">ויאטנם</span>
+        <span class="destinations-hero-separator" aria-hidden="true"></span>
+        <span class="destinations-hero-label" role="listitem">מרוקו</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Fade Divider -->
+  <div class="destinations-hero-divider-wrapper">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,80 L0,48 Q60,38 120,44 T240,40 Q300,44 360,36 T480,42 Q540,38 600,44 T720,38 Q780,44 840,36 T960,42 Q1020,38 1080,44 T1200,40 L1200,80 Z" fill="var(--bg-light)"></path>
+    </svg>
+  </div>
+</section>
+
+<section class="destinations-gallery-section" data-layout-spec="יעדים-gallery" dir="rtl" id="destinations-gallery-section">
+  <div class="destinations-gallery-container">
+
+    <div class="destinations-gallery-header">
+      <p class="zappy-editable"><span class="destinations-gallery-label">יעדי הבחירה שלנו</span>
+      </p><h2 class="destinations-gallery-title">מסעות שמשאירים רושם</h2>
+      <p class="destinations-gallery-subtitle">כל יעד נבחר בקפידה כדי להעניק לכם חוויה בלתי נשכחת — מהנוף הראשון ועד הרגע האחרון</p>
+    </div>
+
+    <div class="destinations-gallery-grid zappy-preserve-css-grid" id="zappy-auto-grid-1776347788933-5ors5h" data-zappy-auto-grid="true" data-original-item-width="376" data-original-gap="36px" style="display: grid; --zappy-grid-cols: repeat(3, minmax(0, 1fr)); grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch !important;" data-zappy-explicit-columns="true">
+
+      <!-- Card 1: מרוקו -->
+      <article class="destination-card zappy-grid-item-no-stretch" data-grid-item-index="0">
+        <div class="destination-card-ornament destination-card-ornament--tl">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2 L2 22 M2 2 L22 2" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="destination-card-ornament destination-card-ornament--br">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M46 46 L46 26 M46 46 L26 46" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <figure class="destination-card-image-wrap">
+          <img data-context="Vibrant aerial or street-level photograph of Morocco — terracotta medina rooftops, blue-tiled fountains, spice market stalls overflowing with saffron and paprika, golden evening light washing over ancient city walls, rich warm tones of ochre and rust. Premium travel editorial style." width="600" height="750" src="/assets/section-gallery-destinations-gallery-image-1.webp" alt="מרוקו — מדינה עתיקה ושווקים צבעוניים" data-zappy-editable-image="true" data-element-type="image" data-element-id="img-1776347788915-0gwigwii4" style="">
+        </figure>
+        <div class="destination-card-body">
+          <h2 class="destination-card-name">מרוקו</h2>
+          <p class="destination-card-desc">ריחות התבלינים, הכחול של שפשאון, והחום של הסהרה — מרוקו היא יעד שמדבר אל כל החושים. אנחנו מאורגנים כאן ויודעים לקחת אתכם אל הלב האמיתי של הממלכה.</p>
+          <p class="zappy-editable"><a href="/destinations/morocco" class="destination-card-cta">גלו את מרוקו <span aria-hidden="true">←</span></a>
+        </p></div>
+      </article>
+
+      <!-- Card 2: ויאטנם (highlighted middle) -->
+      <article class="destination-card destination-card--featured zappy-grid-item-no-stretch" data-grid-item-index="1">
+        <div class="destination-card-ornament destination-card-ornament--tl">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2 L2 22 M2 2 L22 2" stroke="var(--secondary)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="destination-card-ornament destination-card-ornament--br">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M46 46 L46 26 M46 46 L26 46" stroke="var(--secondary)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <figure class="destination-card-image-wrap">
+          <div data-zappy-zoom-wrapper="true" data-element-id="img-1776347788916-1kz921ngg" data-element-type="image" data-zappy-zoom-wrapper-width="389px" data-zappy-zoom-wrapper-height="486px" data-zappy-zoom-wrapper-width-mode="px" data-zappy-zoom-clip="true" data-zappy-wrapper-margins-applied="true" style="position: relative !important; overflow: hidden !important; width: 389px !important; max-width: 100% !important; margin-left: auto !important; margin-right: auto !important; height: 486px !important; display: block !important;"><img data-context="Breathtaking landscape photograph of Vietnam — emerald rice terraces cascading down misty mountains in Sapa, or a serene Ha Long Bay at dawn with limestone karsts rising from jade water, traditional wooden junk boats, soft morning haze. Premium editorial travel photography, lush and atmospheric." width="600" height="750" src="/assets/section-gallery-destinations-gallery-image-2.webp" alt="ויאטנם — נופים מרהיבים ותרבות עשירה" data-zappy-editable-image="true" data-element-type="image" data-element-id="img-1776347788916-1kz921ngg" style="display: block; object-position: 46% 90% !important; margin-top: 0px !important; margin-bottom: 0px !important; left: -16.1664% !important; top: -3.6% !important; width: 135.144% !important; height: 104% !important; max-width: none !important; max-height: none !important; object-fit: cover !important;" data-zappy-zoom="1.04" data-zappy-object-position="46% 90%"></div>
+        </figure>
+        <div class="destination-card-body">
+          <h2 class="destination-card-name">ויאטנם</h2>
+          <p class="destination-card-desc">מטיילים בין שדות אורז ירוקים, מפרצי ים כחולים ורחובות שוקקים של האנוי — ויאטנם מציעה עושר בלתי נגמר לכל סוג של מטייל. מסע שמשנה פרספקטיבה.</p>
+          <p class="zappy-editable"><a href="/destinations/vietnam" class="destination-card-cta">גלו את ויאטנם <span aria-hidden="true">←</span></a>
+        </p></div>
+      </article>
+
+      <!-- Card 3: אתיופיה -->
+      <article class="destination-card zappy-grid-item-no-stretch" data-grid-item-index="2">
+        <div class="destination-card-ornament destination-card-ornament--tl">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2 L2 22 M2 2 L22 2" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="destination-card-ornament destination-card-ornament--br">
+          <svg data-no-icon-edit="true" aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M46 46 L46 26 M46 46 L26 46" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <figure class="destination-card-image-wrap">
+          <img data-context="Stunning editorial photograph of Ethiopia — ancient rock-hewn churches of Lalibela carved into red volcanic stone, or the surreal alien landscape of the Danakil Depression with neon yellow sulfur springs and salt flats, dramatic warm golden light, sense of timeless history and adventure. Premium travel photography." width="600" height="750" src="/assets/section-gallery-destinations-gallery-image-3.webp" alt="אתיופיה — עתיקות, נופים מרהיבים ותרבות ייחודית" data-zappy-editable-image="true" data-element-type="image" data-element-id="img-1776347788916-h7pyyd779" style="">
+        </figure>
+        <div class="destination-card-body">
+          <h2 class="destination-card-name">אתיופיה</h2>
+          <p class="destination-card-desc">כנסיות חצובות בסלע, שוקי בוקר עמוסי ניחוחות קפה ותרבות שמרגישה כמו גילוי — אתיופיה היא אחד מהיעדים הפחות מוכרים ועם הפוטנציאל הגדול ביותר לחוויה אותנטית.</p>
+          <p class="zappy-editable"><a href="/destinations/ethiopia" class="destination-card-cta">גלו את אתיופיה <span aria-hidden="true">←</span></a>
+        </p></div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="destinations-services-section" data-layout-spec="יעדים-services" dir="rtl">
+  <!-- Decorative route-line SVG background -->
+  <div class="dss-route-lines" aria-hidden="true">
+    <svg viewBox="0 0 1200 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" data-no-icon-edit="true" aria-hidden="true">
+      <path d="M-50,180 Q200,120 400,200 T750,160 Q950,130 1250,190" stroke="rgba(246,189,96,0.12)" stroke-width="2" fill="none" stroke-dasharray="8,14"></path>
+      <path d="M-50,320 Q150,280 350,340 T700,300 Q900,270 1250,330" stroke="rgba(246,189,96,0.09)" stroke-width="1.5" fill="none" stroke-dasharray="6,18"></path>
+      <path d="M-50,460 Q250,410 480,470 T850,440 Q1050,420 1250,460" stroke="rgba(246,189,96,0.08)" stroke-width="1" fill="none" stroke-dasharray="4,20"></path>
+      <circle cx="400" cy="200" r="4" fill="rgba(246,189,96,0.18)"></circle>
+      <circle cx="750" cy="160" r="3" fill="rgba(246,189,96,0.14)"></circle>
+      <circle cx="200" cy="320" r="3" fill="rgba(246,189,96,0.12)"></circle>
+      <circle cx="700" cy="300" r="4" fill="rgba(246,189,96,0.16)"></circle>
+    </svg>
+  </div>
+
+  <div class="dss-container">
+    <!-- Intro Block -->
+    <div class="dss-intro">
+      <span class="dss-eyebrow">הגישה שלנו לכל יעד</span>
+      <h2 class="dss-heading">מה שמייחד כל מסע שאנו בונים</h2>
+      <p class="dss-intro-text">אנו מאמינים שנסיעה מוצלחת אינה רק טיסה ומלון — היא חוויה שלמה. בכל יעד שאנו מציעים, אנו מביאים שלושה עקרונות מרכזיים שמבטיחים שתחזרו הביתה עם זיכרונות שיישארו לכל החיים.</p>
+    </div>
+
+    <!-- Feature Grid -->
+    <div class="dss-grid">
+
+      <!-- Tile 1: תרבות ונופים -->
+      <article class="dss-tile">
+        <div class="dss-tile-accent-line"></div>
+        <figure class="dss-tile-image-wrap">
+          <img data-context="Breathtaking cultural landscape — ancient ruins or vibrant local market in a Mediterranean or European destination, golden hour light, rich colors, travel editorial style, cinematic composition for an Israeli travel agency" width="400" height="220" src="/assets/section-services-destinations-services-image-1.webp" alt="תרבות ונופים — יעדים בינלאומיים" data-zappy-editable-image="true">
+        </figure>
+        <div class="dss-tile-body">
+          <div class="dss-tile-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" data-element-type="icon" data-icon-type="svg">
+              <circle cx="14" cy="14" r="11" stroke="var(--accent)" stroke-width="1.5"></circle>
+              <path d="M14 3 C14 3 8 10 8 14 C8 17.3 10.7 20 14 20 C17.3 20 20 17.3 20 14 C20 10 14 3 14 3Z" stroke="var(--accent)" stroke-width="1.2" fill="none"></path>
+              <path d="M3 14 L25 14" stroke="var(--accent)" stroke-width="1.2"></path>
+            </svg>
+          </div>
+          <h3 class="dss-tile-title">תרבות ונופים</h3>
+          <p class="dss-tile-text">אנו צוללים לעומק כל יעד — מהאתרים ההיסטוריים הנסתרים ועד לחוויות הקולינריות המקומיות. כל תוכנית נסיעה שלנו כוללת נגיעות תרבות אותנטיות שלא תמצאו בסיורים הרגילים.</p>
+        </div>
+      </article>
+
+      <!-- Tile 2: תכנון מדויק -->
+      <article class="dss-tile">
+        <div class="dss-tile-accent-line"></div>
+        <figure class="dss-tile-image-wrap">
+          <img data-context="Elegant travel planning flat lay — detailed map, compass, vintage travel journal, pen, and passport on a dark teal surface, overhead shot, editorial travel magazine aesthetic for an Israeli travel agency" width="400" height="220" src="/assets/section-services-destinations-services-image-2.webp" alt="תכנון מדויק — ארגון מסע מקצועי" data-zappy-editable-image="true">
+        </figure>
+        <div class="dss-tile-body">
+          <div class="dss-tile-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" data-element-type="icon" data-icon-type="svg">
+              <rect x="4" y="4" width="20" height="20" rx="2" stroke="var(--accent)" stroke-width="1.5"></rect>
+              <path d="M9 4 L9 8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M19 4 L19 8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M4 12 L24 12" stroke="var(--accent)" stroke-width="1.2"></path>
+              <path d="M9 17 L13 21 L19 15" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <h3 class="dss-tile-title">תכנון מדויק</h3>
+          <p class="dss-tile-text">כל פרט מתוכנן מראש — לוחות זמנים, העברות, לינה ופעילויות. אנו דואגים שכל רגע במסע יהיה מנוצל בצורה הטובה ביותר, ללא הפתעות ועם גמישות מרבית לטיולים עצמאיים.</p>
+        </div>
+      </article>
+
+      <!-- Tile 3: ליווי אישי -->
+      <article class="dss-tile">
+        <div class="dss-tile-accent-line"></div>
+        <figure class="dss-tile-image-wrap">
+          <img data-context="Warm personal service moment — travel agent consulting with an Israeli couple over a beautiful destination brochure or tablet showing travel plans, professional and welcoming atmosphere, editorial style photography" width="400" height="220" src="/assets/section-services-destinations-services-image-3.webp" alt="ליווי אישי — שירות אישי לאורך כל המסע" data-zappy-editable-image="true">
+        </figure>
+        <div class="dss-tile-body">
+          <div class="dss-tile-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" data-element-type="icon" data-icon-type="svg">
+              <circle cx="14" cy="10" r="5" stroke="var(--accent)" stroke-width="1.5"></circle>
+              <path d="M5 24 C5 19.6 9 16 14 16 C19 16 23 19.6 23 24" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M20 8 L22 10 L26 6" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <h3 class="dss-tile-title">ליווי אישי</h3>
+          <p class="dss-tile-text">אתם לא נסעים לבד — הצוות שלנו זמין לפני, במהלך ואחרי הנסיעה. מענה מהיר בעברית, פתרון בעיות בזמן אמת, והכוונה אישית שמתאימה בדיוק לסגנון הנסיעה שלכם.</p>
+        </div>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- Bottom cream divider -->
+  <div class="dss-divider-wrapper">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,48 L0,22 Q100,14 200,24 T400,18 Q550,12 600,20 T800,16 Q950,10 1050,22 T1200,18 L1200,48 Z" fill="var(--bg-light)"></path>
+    </svg>
+  </div>
+</section>
+
+<section class="destinations-about-section" data-layout-spec="יעדים-about" dir="rtl">
+  <div class="destinations-about-container">
+
+    <!-- Text Column (Right, 58%) -->
+    <div class="destinations-about-text-col">
+      <div class="destinations-about-text-inner">
+        <span class="destinations-about-eyebrow">יעדים נבחרים</span>
+        <h2 class="destinations-about-h2">מסעות שמשנים את האופן שבו אתם רואים את העולם</h2>
+        <p class="destinations-about-intro">מינוף טורס מתמחה ביצירת חוויות נסיעה בלתי נשכחות לישראלים הטסים לחו״ל. אנחנו בוחרים בקפידה כל יעד, כל מסלול וכל רגע — כדי שתחזרו הביתה עם סיפורים שתספרו לאורך שנים.</p>
+
+        <!-- Highlight 1: Ethiopia -->
+        <div class="destinations-highlight">
+          <div class="destinations-highlight-divider"></div>
+          <div class="destinations-highlight-content">
+            <div class="destinations-highlight-header">
+              <span class="destinations-highlight-flag">🇪🇹</span>
+              <h3 class="destinations-highlight-h3">אתיופיה — עומק שורשים ועולם עתיק</h3>
+            </div>
+            <p>ארץ של כנסיות חצובות בסלע, שבטים ססגוניים ונופי הרי אביסיניה המרהיבים. אתיופיה מציעה לנוסע הסקרן מפגש אמיתי עם ציוויליזציה אחת מהעתיקות בעולם — ממסגדי הרר ועד אגם טאנה, כל יום מגלה שכבה חדשה של היסטוריה חיה ונושמת.</p>
+          </div>
+        </div>
+
+        <!-- Highlight 2: Vietnam -->
+        <div class="destinations-highlight">
+          <div class="destinations-highlight-divider"></div>
+          <div class="destinations-highlight-content">
+            <div class="destinations-highlight-header">
+              <span class="destinations-highlight-flag">🇻🇳</span>
+              <h3 class="destinations-highlight-h3">וייטנאם — בין ג׳ונגל לחוף, בין עתיק לחדיש</h3>
+            </div>
+            <p>מהמפרצים הירוקים של האלונג בי ועד שדרות הפנסים הצבעוניים של הוי אן — וייטנאם היא ניגודים שמשלימים זה את זה. מטבח מדהים, אנשים חמים ונופים שנראים כמו ציורי שמן. כל מסלול כאן הוא הרפתקה שמתחילה בריח הפו ומסתיימת בשקיעה על החוף.</p>
+          </div>
+        </div>
+
+        <!-- Highlight 3: Morocco -->
+        <div class="destinations-highlight">
+          <div class="destinations-highlight-divider"></div>
+          <div class="destinations-highlight-content">
+            <div class="destinations-highlight-header">
+              <span class="destinations-highlight-flag">🇲🇦</span>
+              <h3 class="destinations-highlight-h3">מרוקו — שוק של חושים, שטיח של צבעים</h3>
+            </div>
+            <p>מדינות מרוקו הן עולם שלם בפני עצמו: מדינות עתיקות, ריח של כמון ועוד, מגדלי מסגדים מוזהבים בשקיעה, ומדבר הסהרה שמחכה בקצה האופק. בין פאס למרקש, בין החוף האטלנטי להרי האטלס — מרוקו היא יעד שמשאיר חותם עמוק על כל מי שמבקר בה.</p>
+          </div>
+        </div>
+        <div class="destinations-highlight-divider destinations-highlight-divider--last"></div>
+
+        <a href="/contact" class="destinations-about-cta">צרו קשר לתכנון הטיול שלכם <i class="fa-solid fa-arrow-left"></i></a>
+      </div>
+    </div>
+
+    <!-- Image Panel (Left, 42%) -->
+    <div class="destinations-about-image-col" aria-hidden="true">
+      <div class="destinations-about-image-stack">
+        <figure class="destinations-about-img-main effect-tiltRight">
+          <img data-context="Aerial view of a vibrant Moroccan medina with colorful rooftops, narrow alleys, and a mosque minaret glowing in warm golden sunset light — editorial travel photography, rich warm tones" width="420" height="560" src="/assets/section-about-destinations-about-image-1.webp" alt="מדינה מרוקאית עתיקה מלמעלה" data-zappy-editable-image="true">
+        </figure>
+        <figure class="destinations-about-img-secondary effect-tiltLeft">
+          <img data-context="Vietnamese woman in traditional áo dài walking through a misty emerald rice terrace valley in Sapa — cinematic travel photography, lush greens and soft morning light" width="300" height="380" src="/assets/section-about-destinations-about-image-2.webp" alt="אישה בשדות האורז של וייטנאם" data-zappy-editable-image="true">
+        </figure>
+        <div class="destinations-about-img-accent-dot" aria-hidden="true"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="destinations-cta-section" data-layout-spec="יעדים-cta" dir="rtl">
+  <!-- Vignette overlay -->
+  <div class="destinations-cta-vignette" aria-hidden="true"></div>
+
+  <!-- Aerial texture overlay -->
+  <div class="destinations-cta-texture" aria-hidden="true"></div>
+
+  <!-- Content block -->
+  <div class="destinations-cta-container">
+    <div class="destinations-cta-content">
+      <p class="destinations-cta-eyebrow">מינוף טורס</p>
+      <h2 class="destinations-cta-heading">מוכנים לצאת לדרך?</h2>
+      <p class="destinations-cta-body">בין אם חלמתם על יעד אקזוטי או מתכננים חופשה משפחתית אירופאית — הצוות שלנו כאן כדי להפוך כל נסיעה לחוויה בלתי נשכחת. נשמח לבנות עבורכם מסלול מותאם אישית.</p>
+      <div class="destinations-cta-buttons">
+        <a href="/contact" class="destinations-btn-primary">צרו קשר עכשיו</a>
+        <a href="#destinations-grid" class="destinations-btn-ghost">לכל היעדים</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saffron route curve SVG -->
+  <div class="destinations-cta-curve-wrapper" aria-hidden="true">
+    <svg data-no-icon-edit="true" aria-hidden="true" viewBox="0 0 1200 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,42 Q150,18 300,38 T600,28 T900,38 T1200,24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-opacity="0.55" stroke-dasharray="6 4"></path>
+      <circle cx="0" cy="42" r="3.5" fill="var(--accent)" fill-opacity="0.7"></circle>
+      <circle cx="1200" cy="24" r="3.5" fill="var(--accent)" fill-opacity="0.7"></circle>
+    </svg>
+  </div>
+</section></main>
+  
+  <footer class="site-footer" dir="rtl">
+  <div class="footer-main">
+    <div class="footer-container">
+      <div class="footer-grid">
+
+        <!-- Company Info -->
+        <div class="footer-col footer-col--brand">
+          <div class="footer-logo-wrap">
+            <img src="/assets/business-logo.webp" alt="מינוף טורס" class="logo">
+          </div>
+          <p class="footer-tagline">חוויות נסיעה בלתי נשכחות לכל יעד בעולם. אנחנו כאן כדי להפוך כל מסע לחלום שמתגשם.</p>
+          <div class="footer-social">
+            <a href="[facebook_handle]" aria-label="Facebook" class="social-link"><i class="fab fa-facebook-f"></i></a>
+            <a href="[instagram_handle]" aria-label="Instagram" class="social-link"><i class="fab fa-instagram"></i></a>
+            <a href="[whatsapp_handle]" aria-label="WhatsApp" class="social-link"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-col footer-col--links">
+          <h3 class="footer-heading">
+            <span class="heading-accent"></span>
+            ניווט מהיר
+          </h3>
+          <ul class="footer-nav">
+            <li><a href="/services"><i class="fas fa-chevron-left nav-arrow"></i>שירותי נסיעות</a></li>
+            <li><a href="/about"><i class="fas fa-chevron-left nav-arrow"></i>אודות</a></li>
+            <li><a href="/contact"><i class="fas fa-chevron-left nav-arrow"></i>צור קשר</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="footer-col footer-col--contact">
+          <h3 class="footer-heading">
+            <span class="heading-accent"></span>
+            יצירת קשר
+          </h3>
+          <ul class="footer-contact">
+            <li>
+              <span class="contact-icon"><i class="fas fa-envelope"></i></span>
+              <span class="contact-text"><a href="mailto:[business_email]">[business_email]</a></span>
+            </li>
+            <li>
+              <span class="contact-icon"><i class="fas fa-phone"></i></span>
+              <span class="contact-text"><a href="tel:[business_phone]">[business_phone]</a></span>
+            </li>
+            <li><a href="/"><span class="contact-icon"><i class="fas fa-map-marker-alt"></i></span>
+              <span class="contact-text">[business_address]</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Newsletter / Extra -->
+        <div class="footer-col footer-col--extra">
+          <h3 class="footer-heading">
+            <span class="heading-accent"></span>
+            השראה לנסיעה הבאה
+          </h3>
+          <p class="footer-extra-text">הצטרפו לאלפי נוסעים שמקבלים טיפים, מבצעים ויעדים חדשים ישירות לתיבת הדואר.</p>
+          <div class="footer-badge">
+            <i class="fas fa-globe-americas"></i>
+            <span>מעל 50 יעדים ברחבי העולם</span>
+          </div>
+          <div class="footer-badge">
+            <i class="fas fa-star"></i>
+            <span>שירות פרסונלי ומקצועי</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="footer-divider-wrap">
+    <div class="footer-container">
+      <div class="footer-divider"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="footer-bottom">
+    <div class="footer-container">
+      <div class="footer-bottom-inner">
+        <p class="footer-copyright">© 2026 מינוף טורס. כל הזכויות שמורות.</p>
+        <div class="footer-legal">
+          <a href="/privacy">מדיניות פרטיות</a>
+          <span class="legal-sep"></span>
+          <a href="/terms">תנאי שימוש</a>
+          <span class="legal-sep"></span>
+          <a href="/accessibility">נגישות</a>
+          <span class="legal-sep"></span>
+          <a href="https://zappy5.com" target="_blank" class="zappy-attribution">נוצר באמצעות Zappy</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+  
+  <a href="https://wa.me/[whatsapp_handle]" class="whatsapp-float" aria-label="WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  
+  <div data-integration="accessibility:toolbar"></div>
+
+    <script src="/script.js"></script>
+
+    <script id="zappy-mobile-submenu-script">
+    (function() {
+      function initMobileSubmenuToggles() {
+        if (window.innerWidth > 768) {
+          document.querySelectorAll('.mobile-submenu-toggle').forEach(function(btn) { btn.remove(); });
+          document.querySelectorAll('.sub-menu.mobile-expanded').forEach(function(menu) { menu.classList.remove('mobile-expanded'); });
+          return;
+        }
+        var items = document.querySelectorAll('.nav-menu li:has(.sub-menu), nav li:has(.sub-menu), .navbar li:has(.sub-menu), #navMenu li:has(.sub-menu)');
+        items.forEach(function(li) {
+          if (li.querySelector('.mobile-submenu-toggle')) return;
+          var submenu = li.querySelector('.sub-menu');
+          var parentLink = li.querySelector(':scope > a');
+          if (!submenu || !parentLink) return;
+          var toggleBtn = document.createElement('button');
+          toggleBtn.className = 'mobile-submenu-toggle';
+          toggleBtn.setAttribute('aria-label', 'Toggle submenu');
+          toggleBtn.setAttribute('type', 'button');
+          parentLink.insertAdjacentElement('afterend', toggleBtn);
+          toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            document.querySelectorAll('.sub-menu.mobile-expanded').forEach(function(menu) {
+              if (menu !== submenu) { menu.classList.remove('mobile-expanded'); var t = menu.parentElement.querySelector('.mobile-submenu-toggle'); if(t) t.classList.remove('expanded'); }
+            });
+            submenu.classList.toggle('mobile-expanded');
+            toggleBtn.classList.toggle('expanded');
+          });
+        });
+      }
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initMobileSubmenuToggles); }
+      else { initMobileSubmenuToggles(); }
+      var resizeTimer; window.addEventListener('resize', function() { clearTimeout(resizeTimer); resizeTimer = setTimeout(initMobileSubmenuToggles, 250); });
+      // Re-initialize when mobile menu becomes visible (MutationObserver)
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes') {
+            var target = mutation.target;
+            if (target.classList && (target.classList.contains('active') || target.classList.contains('open'))) {
+              setTimeout(initMobileSubmenuToggles, 100);
+            }
+          }
+        });
+      });
+      setTimeout(function() {
+        document.querySelectorAll('.mobile-menu, .nav-menu, #navMenu, nav').forEach(function(menu) {
+          observer.observe(menu, { attributes: true, attributeFilter: ['class', 'style'] });
+        });
+      }, 500);
+    })();
+    </script>
+
+    <script id="zappy-navbar-scroll-effect">
+    (function(){
+      var nb=document.querySelector('nav.navbar,.navbar:not(.zappy-catalog-menu)');
+      var cm=document.querySelector('.zappy-catalog-menu,#zappy-catalog-menu');
+      if(!nb)return;
+      var fb='rgba(250,247,242,0.85)';
+      var th=60;
+      var rs=getComputedStyle(document.documentElement);
+      var td=rs.getPropertyValue('--text-dark').trim()||'#1a1a1a';
+      var tl=rs.getPropertyValue('--text-light').trim()||'#ffffff';
+      var st=true?td:tl;
+      nb.style.transition='background 0.3s ease,backdrop-filter 0.3s ease,-webkit-backdrop-filter 0.3s ease,box-shadow 0.3s ease';
+      if(cm)cm.style.transition='background 0.3s ease,backdrop-filter 0.3s ease,-webkit-backdrop-filter 0.3s ease';
+      var neSel='a,.navbar-brand,.navbar-brand a,.dropdown-toggle,.mobile-toggle,.phone-header-btn,.mobile-hamburger-btn,.mobile-close-btn,.mobile-submenu-toggle,.nav-link';
+      var skipCls=['cart-link','login-link','nav-search-toggle','search-toggle'];
+      function sTC(c,clr){var els=c.querySelectorAll(neSel);for(var i=0;i<els.length;i++){var sk=false;if(els[i].closest('.sub-menu')||els[i].closest('.dropdown-menu')){sk=true;}for(var j=0;j<skipCls.length;j++){if(els[i].classList.contains(skipCls[j])){sk=true;break;}}if(!sk)els[i].style.setProperty('color',clr,'important');}}
+      function cTC(c){var els=c.querySelectorAll(neSel);for(var i=0;i<els.length;i++){if(els[i].closest('.sub-menu')||els[i].closest('.dropdown-menu'))continue;els[i].style.removeProperty('color');}}
+      function applyScrolled(){
+        nb.classList.add('scrolled');
+        if(window.innerWidth>768){
+          nb.style.setProperty('--frosted-text',st);
+          nb.style.setProperty('background-image','none','important');
+          nb.style.setProperty('background-color',fb,'important');
+          nb.style.backdropFilter='blur(12px)';nb.style.webkitBackdropFilter='blur(12px)';nb.style.boxShadow='0 2px 16px rgba(0,0,0,0.12)';
+          sTC(nb,st);
+        }
+        if(cm){cm.classList.add('scrolled');if(window.innerWidth>768){cm.style.setProperty('background',fb,'important');cm.style.setProperty('backdrop-filter','blur(12px)','important');cm.style.setProperty('-webkit-backdrop-filter','blur(12px)','important');sTC(cm,st);}}
+      }
+      function onS(){
+        if(window._zappyNavNoDarkHero) return;
+        if(window.innerWidth<=768){nb.classList.remove('scrolled');cTC(nb);if(cm){cm.classList.remove('scrolled');cTC(cm);}return;}
+        var y=window.scrollY||window.pageYOffset;
+        if(y>th){
+          nb.classList.add('scrolled');nb.style.setProperty('background-color',fb,'important');nb.style.setProperty('background-image','none','important');
+          nb.style.setProperty('--frosted-text',st);nb.style.backdropFilter='blur(12px)';nb.style.webkitBackdropFilter='blur(12px)';nb.style.boxShadow='0 2px 16px rgba(0,0,0,0.12)';
+          sTC(nb,st);
+          if(cm){cm.classList.add('scrolled');cm.style.setProperty('background',fb,'important');cm.style.setProperty('backdrop-filter','blur(12px)','important');cm.style.setProperty('-webkit-backdrop-filter','blur(12px)','important');sTC(cm,st);}
+        }else{
+          nb.classList.remove('scrolled');nb.style.setProperty('background-color','transparent','important');nb.style.removeProperty('background-image');
+          nb.style.removeProperty('--frosted-text');nb.style.backdropFilter='none';nb.style.webkitBackdropFilter='none';nb.style.boxShadow='none';
+          cTC(nb);
+          if(cm){cm.classList.remove('scrolled');cm.style.setProperty('background','transparent','important');cm.style.setProperty('backdrop-filter','none','important');cm.style.setProperty('-webkit-backdrop-filter','none','important');cTC(cm);}
+        }
+      }
+      function sLum(rv,gv,bv){rv/=255;gv/=255;bv/=255;rv=rv<=0.03928?rv/12.92:Math.pow((rv+0.055)/1.055,2.4);gv=gv<=0.03928?gv/12.92:Math.pow((gv+0.055)/1.055,2.4);bv=bv<=0.03928?bv/12.92:Math.pow((bv+0.055)/1.055,2.4);return 0.2126*rv+0.7152*gv+0.0722*bv;}
+      window.addEventListener('scroll',onS,{passive:true});
+      window.addEventListener('resize',onS,{passive:true});
+      onS();
+      var heroEl=document.querySelector('section[class*="hero"],[data-hero-type],main>section:first-child');
+      var hasDH=false;
+      if(heroEl){var hCs=getComputedStyle(heroEl);var hBI=hCs.backgroundImage;if(hBI&&hBI!=='none'){if(hBI.indexOf('url(')!==-1){var hM2=hCs.backgroundColor.match(/\d+/g);if(hM2&&hM2.length>=3){hasDH=sLum(parseInt(hM2[0]),parseInt(hM2[1]),parseInt(hM2[2]))<0.4;}else{hasDH=true;}}else if(hBI.indexOf('gradient')!==-1){var cM=hBI.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g);if(cM&&cM.length>0){var tLm=0;for(var ci=0;ci<cM.length;ci++){var pts=cM[ci].match(/\d+/g);tLm+=sLum(parseInt(pts[0]),parseInt(pts[1]),parseInt(pts[2]));}hasDH=(tLm/cM.length)<0.4;}else{hasDH=true;}}else{hasDH=true;}}else{var hM=hCs.backgroundColor.match(/\d+/g);if(hM&&hM.length>=3){hasDH=sLum(parseInt(hM[0]),parseInt(hM[1]),parseInt(hM[2]))<0.4;}}}
+      if(!hasDH){window.removeEventListener('scroll',onS);window.removeEventListener('resize',onS);applyScrolled();window._zappyNavNoDarkHero=true;}
+    })();
+    </script>
+
+    <script id="zappy-mobile-lang-menu-script">
+    (function() {
+      function initMobileLangMenu() {
+        if (window.innerWidth > 768) {
+          var existingMenu = document.querySelector('.mobile-lang-menu');
+          if (existingMenu) existingMenu.remove();
+          return;
+        }
+        if (document.querySelector('.mobile-lang-menu')) return;
+        var switcher = document.querySelector('.lang-switcher');
+        if (!switcher) return;
+        var dropdown = switcher.querySelector('.lang-switcher-dropdown');
+        if (!dropdown) return;
+        var options = dropdown.querySelectorAll('.lang-option');
+        if (options.length === 0) return;
+        var navMenu = document.getElementById('navMenu') || document.querySelector('.nav-menu') || document.querySelector('nav ul');
+        if (!navMenu) return;
+        var currentLang = document.documentElement.lang || 'en';
+        var langConfigs = {
+          he: {name:'עברית',flag:'https://api.iconify.design/circle-flags/il.svg'},
+          en: {name:'English',flag:'https://api.iconify.design/circle-flags/us.svg'},
+          ar: {name:'العربية',flag:'https://api.iconify.design/circle-flags/sa.svg'},
+          fr: {name:'Français',flag:'https://api.iconify.design/circle-flags/fr.svg'},
+          es: {name:'Español',flag:'https://api.iconify.design/circle-flags/es.svg'},
+          de: {name:'Deutsch',flag:'https://api.iconify.design/circle-flags/de.svg'},
+          ru: {name:'Русский',flag:'https://api.iconify.design/circle-flags/ru.svg'},
+          zh: {name:'中文',flag:'https://api.iconify.design/circle-flags/cn.svg'},
+          ja: {name:'日本語',flag:'https://api.iconify.design/circle-flags/jp.svg'},
+          pt: {name:'Português',flag:'https://api.iconify.design/circle-flags/br.svg'},
+          it: {name:'Italiano',flag:'https://api.iconify.design/circle-flags/it.svg'},
+          ko: {name:'한국어',flag:'https://api.iconify.design/circle-flags/kr.svg'}
+        };
+        var container = document.createElement('div');
+        container.className = 'mobile-lang-menu';
+        var currentConfig = langConfigs[currentLang] || {name:currentLang,flag:''};
+        var toggleBtn = document.createElement('button');
+        toggleBtn.className = 'mobile-lang-toggle';
+        toggleBtn.type = 'button';
+        var currentFlagHtml = currentConfig.flag ? '<img src="' + currentConfig.flag + '" width="20" height="20" alt="" style="border-radius:50%;margin-right:8px;margin-left:8px;">' : '';
+        toggleBtn.innerHTML = currentFlagHtml + currentConfig.name;
+        container.appendChild(toggleBtn);
+        var optionsDiv = document.createElement('div');
+        optionsDiv.className = 'mobile-lang-options';
+        var currentLink = document.createElement('a');
+        currentLink.className = 'mobile-lang-option active';
+        currentLink.href = '#';
+        currentLink.innerHTML = currentFlagHtml + currentConfig.name;
+        optionsDiv.appendChild(currentLink);
+        options.forEach(function(opt) {
+          var link = document.createElement('a');
+          link.className = 'mobile-lang-option';
+          link.href = opt.getAttribute('href');
+          link.innerHTML = opt.innerHTML;
+          optionsDiv.appendChild(link);
+        });
+        container.appendChild(optionsDiv);
+        navMenu.appendChild(container);
+        toggleBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleBtn.classList.toggle('expanded');
+          optionsDiv.classList.toggle('expanded');
+        });
+      }
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initMobileLangMenu); }
+      else { initMobileLangMenu(); }
+      window.addEventListener('resize', function() { clearTimeout(window._mlrt); window._mlrt = setTimeout(initMobileLangMenu, 250); });
+    })();
+    </script>
+
+    <script>
+    (function(){
+      var _applied=false;
+      function _isHeroBg(w){var img=w.querySelector('img');if(img&&(img.getAttribute('data-hero-bg')==='true'||img.getAttribute('data-hero-background')==='true'))return true;var p=(w.style.position||'').replace(/\s*!important\s*/g,'').trim();var ww=(w.style.width||'').replace(/\s*!important\s*/g,'').trim();var hh=(w.style.height||'').replace(/\s*!important\s*/g,'').trim();return p==='absolute'&&ww==='100%'&&hh==='100%';}
+      function fixDesktopWrappers(){
+        // No-op: desktop wrapper restoration is handled by ZAPPY_PUBLISHED_ZOOM_WRAPPER_RUNTIME
+        // in script.js (restoreWrapperDimensions). The old inflation logic here was expanding
+        // small wrappers (e.g. 139px logo wrappers) to their parent width, conflicting with
+        // the correct stored dimensions.
+      }
+      function _parsePos(s){var x=50,y=50;try{var m=(s||'').match(/(-?d+(?:.d+)?)%s+(-?d+(?:.d+)?)%/);if(m){x=parseFloat(m[1]);y=parseFloat(m[2]);}}catch(e){}if(!isFinite(x))x=50;if(!isFinite(y))y=50;return{x:Math.max(0,Math.min(100,x)),y:Math.max(0,Math.min(100,y))};}
+      function _coverPct(iA,cA){if(!isFinite(iA)||iA<=0||!isFinite(cA)||cA<=0)return{w:100,h:100};if(iA>=cA)return{w:(iA/cA)*100,h:100};return{w:100,h:(cA/iA)*100};}
+      function applyMobile(){
+        if(_applied)return;_applied=true;
+        document.querySelectorAll('[data-zappy-zoom-wrapper="true"]').forEach(function(w){
+          var cw=w.style.getPropertyValue('width');
+          if(!cw||cw==='100%')return;
+          if(!w._zappyDesktop)w._zappyDesktop={wStyle:w.getAttribute('style')};
+          var img=w.querySelector('img');
+          if(!img)return;
+          if(!img._zappyDesktop)img._zappyDesktop={src:img.getAttribute('src'),style:img.getAttribute('style')};
+          var mobileZoomStr=img.getAttribute('data-zappy-mobile-zoom');
+          var mobileZoom=parseFloat(mobileZoomStr);
+          var mobileSrc=img.getAttribute('data-zappy-mobile-src');
+          var mobilePos=img.getAttribute('data-zappy-mobile-object-position');
+          var hasMobileOverrides=mobilePos||mobileZoomStr;
+          var parentOvf=w.parentElement?((w.parentElement.style.overflow||'')+(window.getComputedStyle(w.parentElement).overflow||'')).trim():'';
+          var inConstrainedParent=parentOvf.indexOf('hidden')!==-1||parentOvf.indexOf('clip')!==-1;
+          if(inConstrainedParent){
+            w.style.setProperty('max-width','100%','important');
+          }else{
+            w.style.setProperty('width','100%','important');
+            w.style.setProperty('max-width','100%','important');
+          }
+          if(mobileSrc)img.src=mobileSrc;
+          if(hasMobileOverrides){
+            var effZoom=(isFinite(mobileZoom)&&mobileZoom>0)?mobileZoom:(parseFloat(img.getAttribute('data-zappy-zoom'))||1);
+            var effPos=mobilePos||'50% 50%';
+            w.style.setProperty('overflow','hidden','important');
+            w.style.setProperty('position','relative','important');
+            w.style.setProperty('width','100%','important');
+            w.style.setProperty('max-width','100%','important');
+            var _sW=parseFloat(w.getAttribute('data-zappy-zoom-wrapper-width'))||0;
+            var _sH=parseFloat(w.getAttribute('data-zappy-zoom-wrapper-height'))||0;
+            if(_sW>0&&_sH>0){w.style.setProperty('aspect-ratio',_sW+'/'+_sH,'important');w.style.setProperty('height','auto','important');}
+            function _applyZoomCrop(_img,_w,_ePos,_eZoom){
+              var rect=_w.getBoundingClientRect();
+              if(!rect||!rect.width||!rect.height)return;
+              var nW=_img.naturalWidth||0,nH=_img.naturalHeight||0;
+              if(!(nW>0&&nH>0))return;
+              var iA=nW/nH,cA=rect.width/rect.height;
+              var cv=_coverPct(iA,cA);
+              var wP=100,hP=100;
+              if(_eZoom>=1){wP=cv.w*_eZoom;hP=cv.h*_eZoom;}
+              else{var t2=(_eZoom-0.5)/0.5;if(!isFinite(t2))t2=0;t2=Math.max(0,Math.min(1,t2));wP=100+t2*(cv.w-100);hP=100+t2*(cv.h-100);}
+              var p2=_parsePos(_ePos);
+              var lP=(100-wP)*(p2.x/100);
+              var tP=(100-hP)*(p2.y/100);
+              _img.style.setProperty('position','absolute','important');
+              _img.style.setProperty('left',lP+'%','important');
+              _img.style.setProperty('top',tP+'%','important');
+              _img.style.setProperty('width',wP+'%','important');
+              _img.style.setProperty('height',hP+'%','important');
+              _img.style.setProperty('max-width','none','important');
+              _img.style.setProperty('max-height','none','important');
+              _img.style.setProperty('display','block','important');
+              _img.style.setProperty('object-fit',_eZoom<1?'fill':'cover','important');
+              _img.style.setProperty('transform','none','important');
+              _img.style.setProperty('margin','0','important');
+            }
+            _applyZoomCrop(img,w,effPos,effZoom);
+            if(mobileSrc&&!(img.complete&&img.naturalWidth>0)){
+              (function(_i,_w2,_p,_z){_i.addEventListener('load',function _ol(){_i.removeEventListener('load',_ol);try{_applyZoomCrop(_i,_w2,_p,_z);}catch(e){}});
+              })(img,w,effPos,effZoom);
+            }
+          }else{
+            if(!inConstrainedParent)w.style.setProperty('height','auto','important');
+            img.style.setProperty('position','relative','important');
+            img.style.setProperty('width','100%','important');
+            img.style.setProperty('height','auto','important');
+            img.style.setProperty('max-width','100%','important');
+            img.style.setProperty('max-height',inConstrainedParent?'none':'400px','important');
+            img.style.setProperty('object-fit','cover','important');
+            img.style.setProperty('left','0','important');
+            img.style.setProperty('top','0','important');
+            img.style.setProperty('transform','none','important');
+          }
+        });
+        document.querySelectorAll('img[data-zappy-mobile-src],img[data-zappy-mobile-object-position],img[data-zappy-mobile-zoom]').forEach(function(img){
+          var zw=img.closest('[data-zappy-zoom-wrapper="true"]');
+          if(zw&&!_isHeroBg(zw))return;
+          if(!img._zappyDesktop)img._zappyDesktop={src:img.getAttribute('src'),style:img.getAttribute('style')};
+          var mobileSrc=img.getAttribute('data-zappy-mobile-src');
+          var mobilePos=img.getAttribute('data-zappy-mobile-object-position');
+          var mobileZoom=parseFloat(img.getAttribute('data-zappy-mobile-zoom'));
+          if(mobileSrc)img.src=mobileSrc;
+          if(mobilePos)img.style.setProperty('object-position',mobilePos,'important');
+          if(mobileZoom>1){
+            img.style.setProperty('transform','scale('+mobileZoom+')','important');
+            img.style.setProperty('transform-origin',mobilePos||'50% 50%','important');
+            var p=img.parentElement;
+            if(p)p.style.setProperty('overflow','hidden','important');
+          }
+        });
+      }
+      function revertDesktop(){
+        if(!_applied)return;_applied=false;
+        document.querySelectorAll('[data-zappy-zoom-wrapper="true"]').forEach(function(w){
+          if(w._zappyDesktop&&w._zappyDesktop.wStyle!=null){w.setAttribute('style',w._zappyDesktop.wStyle);}
+          var img=w.querySelector('img');
+          if(img&&img._zappyDesktop){
+            if(img._zappyDesktop.src!=null)img.setAttribute('src',img._zappyDesktop.src);
+            if(img._zappyDesktop.style!=null)img.setAttribute('style',img._zappyDesktop.style);
+            else img.removeAttribute('style');
+          }
+        });
+        document.querySelectorAll('img[data-zappy-mobile-src],img[data-zappy-mobile-object-position],img[data-zappy-mobile-zoom]').forEach(function(img){
+          var zw=img.closest('[data-zappy-zoom-wrapper="true"]');
+          if(zw&&!_isHeroBg(zw))return;
+          if(img._zappyDesktop){
+            if(img._zappyDesktop.src!=null)img.setAttribute('src',img._zappyDesktop.src);
+            if(img._zappyDesktop.style!=null)img.setAttribute('style',img._zappyDesktop.style);
+            else img.removeAttribute('style');
+          }
+        });
+        _fixHeroBgWrappers();
+        fixDesktopWrappers();
+      }
+      function _fixHeroBgWrappers(){var isMob=window.innerWidth<=768;document.querySelectorAll('[data-zappy-zoom-wrapper="true"]').forEach(function(w){if(!_isHeroBg(w))return;w.style.setProperty('position','absolute','important');w.style.setProperty('top','0','important');w.style.setProperty('left','0','important');w.style.setProperty('width','100%','important');w.style.setProperty('height','100%','important');w.style.setProperty('max-width','none','important');w.style.setProperty('overflow','hidden','important');w.setAttribute('data-zappy-zoom-wrapper-width-mode','full');var img=w.querySelector('img');if(img){img.style.setProperty('width','100%','important');img.style.setProperty('height','100%','important');img.style.setProperty('object-fit','cover','important');img.style.setProperty('position','relative','important');img.style.setProperty('top','0','important');img.style.setProperty('left','0','important');img.style.setProperty('max-width','none','important');img.style.setProperty('max-height','none','important');img.style.setProperty('display','block','important');if(isMob){var mSrc=img.getAttribute('data-zappy-mobile-src');var mPos=img.getAttribute('data-zappy-mobile-object-position');var mZoom=parseFloat(img.getAttribute('data-zappy-mobile-zoom'));if(mSrc){if(!img._zappyDesktop)img._zappyDesktop={src:img.getAttribute('src'),style:img.getAttribute('style')};img.src=mSrc;}if(mPos)img.style.setProperty('object-position',mPos,'important');if(mZoom>1){img.style.setProperty('transform','scale('+mZoom+')','important');img.style.setProperty('transform-origin',mPos||'50% 50%','important');}}}});}
+      function init(){
+        _fixHeroBgWrappers();
+        var mq=window.matchMedia('(max-width:768px)');
+        function onChange(e){if(e.matches)applyMobile();else revertDesktop();}
+        if(mq.matches)applyMobile();
+        else fixDesktopWrappers();
+        try{mq.addEventListener('change',onChange);}catch(e){mq.addListener(onChange);}
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+      else setTimeout(init,50);
+    })();
+    </script>
+</body>
+</html>
